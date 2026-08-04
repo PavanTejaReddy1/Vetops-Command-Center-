@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Theme tokens.
+  Every color in the app is a CSS variable in "R G B" (space separated) form so
+  Tailwind's <alpha-value> opacity modifiers work (e.g. bg-surface/60).
+  Light and dark are just two different assignments of the same variable names —
+  components never branch on theme, they only ever read tokens.
+*/
+:root {
+  --color-canvas: 246 248 247;          /* app background */
+  --color-surface: 255 255 255;         /* card / panel background */
+  --color-surface-raised: 255 255 255;  /* modals, popovers */
+  --color-border: 226 232 230;
+  --color-border-strong: 205 214 211;
+
+  --color-ink: 13 24 23;
+  --color-ink-muted: 90 106 103;
+  --color-ink-faint: 143 158 155;
+}
+
+.dark {
+  --color-canvas: 8 16 16;
+  --color-surface: 14 24 24;
+  --color-surface-raised: 19 31 31;
+  --color-border: 30 46 45;
+  --color-border-strong: 42 60 59;
+
+  --color-ink: 236 244 242;
+  --color-ink-muted: 158 176 173;
+  --color-ink-faint: 100 120 117;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-canvas text-ink font-body transition-colors duration-200;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display text-ink;
+  }
+  ::selection {
+    @apply bg-brand-200/60 text-brand-900;
+  }
+
+  /* Visible keyboard focus everywhere — enterprise accessibility floor */
+  :focus-visible {
+    outline: 2px solid rgb(var(--color-canvas));
+    box-shadow: 0 0 0 2px rgb(13 124 115);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-border-strong));
+    border-radius: 999px;
+    border: 2px solid rgb(var(--color-canvas));
+  }
+}
+
+@layer utilities {
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -1,0 +1,73 @@
+/**
+ * Dummy data — Veterinarians
+ * Shape mirrors the future `GET /api/v1/veterinarians` response so this
+ * file can be deleted wholesale once the backend is wired up.
+ */
+export const veterinarians = [
+  {
+    id: 'vet-001',
+    name: 'Dr. Elena Marsh',
+    role: 'Senior Veterinarian',
+    specialty: 'Soft Tissue Surgery',
+    avatarColor: 'brand',
+    status: 'on-shift',
+    utilization: 92,
+    activeCases: 6,
+    shift: '07:00 – 15:00',
+  },
+  {
+    id: 'vet-002',
+    name: 'Dr. Raj Patel',
+    role: 'Veterinarian',
+    specialty: 'Internal Medicine',
+    avatarColor: 'signal-blue',
+    status: 'on-shift',
+    utilization: 78,
+    activeCases: 4,
+    shift: '09:00 – 17:00',
+  },
+  {
+    id: 'vet-003',
+    name: 'Dr. Naomi Cole',
+    role: 'Veterinarian',
+    specialty: 'Dermatology',
+    avatarColor: 'signal-amber',
+    status: 'on-break',
+    utilization: 55,
+    activeCases: 2,
+    shift: '09:00 – 17:00',
+  },
+  {
+    id: 'vet-004',
+    name: 'Dr. Marcus Webb',
+    role: 'Emergency Veterinarian',
+    specialty: 'Emergency & Critical Care',
+    avatarColor: 'signal-rose',
+    status: 'on-shift',
+    utilization: 97,
+    activeCases: 8,
+    shift: '12:00 – 20:00',
+  },
+  {
+    id: 'vet-005',
+    name: 'Dr. Priya Nair',
+    role: 'Veterinarian',
+    specialty: 'Cardiology',
+    avatarColor: 'signal-success',
+    status: 'off-shift',
+    utilization: 0,
+    activeCases: 0,
+    shift: 'Off today',
+  },
+  {
+    id: 'vet-006',
+    name: 'Dr. Owen Fisher',
+    role: 'Associate Veterinarian',
+    specialty: 'General Practice',
+    avatarColor: 'brand',
+    status: 'on-shift',
+    utilization: 64,
+    activeCases: 3,
+    shift: '07:00 – 15:00',
+  },
+];
