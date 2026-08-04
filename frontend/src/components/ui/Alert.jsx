@@ -5,6 +5,7 @@ const VARIANTS = {
   info: { icon: Info, wrap: 'bg-signal-blue-soft border-signal-blue/30 text-signal-blue-deep' },
   success: { icon: CheckCircle2, wrap: 'bg-signal-success-soft border-signal-success/30 text-signal-success-deep' },
   warning: { icon: AlertTriangle, wrap: 'bg-signal-amber-soft border-signal-amber/30 text-signal-amber-deep' },
+  error: { icon: XCircle, wrap: 'bg-signal-rose-soft border-signal-rose/30 text-signal-rose-deep' },
   critical: { icon: XCircle, wrap: 'bg-signal-rose-soft border-signal-rose/30 text-signal-rose-deep' },
 };
 
