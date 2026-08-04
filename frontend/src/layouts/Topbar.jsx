@@ -181,41 +181,50 @@ export function Topbar({ onOpenMobileSidebar }) {
               placeholder="Search patients, owners, tasks…"
             />
           </form>
-          {showSearchResults && searchResults.length > 0 && (
+          {showSearchResults && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowSearchResults(false)} />
               <div className="absolute right-0 z-20 mt-2 w-full max-w-sm animate-fade-up rounded-lg border border-border bg-surface-raised shadow-popover">
                 <div className="max-h-80 overflow-y-auto">
-                  {searchResults.map((result) => (
+                  {searchResults.length === 0 ? (
+                    <div className="px-4 py-8 text-center">
+                      <p className="text-sm text-ink-muted">No results found for "{search}"</p>
+                      <p className="mt-1 text-xs text-ink-faint">Try a different search term</p>
+                    </div>
+                  ) : (
+                    searchResults.map((result) => (
+                      <button
+                        key={result.id}
+                        onClick={() => handleSearchResultClick(result)}
+                        className="flex w-full items-center gap-3 border-b border-border px-4 py-3 last:border-0 hover:bg-canvas/60 text-left"
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">
+                          {result.type === 'patient' && '🐾'}
+                          {result.type === 'task' && '📋'}
+                          {result.type === 'appointment' && '📅'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-ink truncate">{result.name}</p>
+                          <p className="mt-0.5 text-xs text-ink-faint">
+                            {result.type === 'patient' && `Owner: ${result.owner}`}
+                            {result.type === 'task' && `Assigned to: ${result.assignedTo}`}
+                            {result.type === 'appointment' && `${result.patient} • ${result.time}`}
+                          </p>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+                {searchResults.length > 0 && (
+                  <div className="border-t border-border px-4 py-2">
                     <button
-                      key={result.id}
-                      onClick={() => handleSearchResultClick(result)}
-                      className="flex w-full items-center gap-3 border-b border-border px-4 py-3 last:border-0 hover:bg-canvas/60 text-left"
+                      onClick={handleSearchSubmit}
+                      className="text-xs font-medium text-brand-600 hover:text-brand-700"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">
-                        {result.type === 'patient' && '🐾'}
-                        {result.type === 'task' && '📋'}
-                        {result.type === 'appointment' && '📅'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-ink truncate">{result.name}</p>
-                        <p className="mt-0.5 text-xs text-ink-faint">
-                          {result.type === 'patient' && `Owner: ${result.owner}`}
-                          {result.type === 'task' && `Assigned to: ${result.assignedTo}`}
-                          {result.type === 'appointment' && `${result.patient} • ${result.time}`}
-                        </p>
-                      </div>
+                      View all results for "{search}"
                     </button>
-                  ))}
-                </div>
-                <div className="border-t border-border px-4 py-2">
-                  <button
-                    onClick={handleSearchSubmit}
-                    className="text-xs font-medium text-brand-600 hover:text-brand-700"
-                  >
-                    View all results for "{search}"
-                  </button>
-                </div>
+                  </div>
+                )}
               </div>
             </>
           )}
