@@ -24,6 +24,7 @@ import { kpiMetrics, forecastSeries, caseloadByDepartment } from '../../data/kpi
 import { alerts } from '../../data/alerts';
 import { appointmentsApi } from '../../lib/api/appointments';
 import { tasksApi } from '../../lib/api/tasks';
+import { predictionsApi } from '../../lib/api/predictions';
 import { formatTime } from '../../lib/utils/formatters';
 
 const SEVERITY_VARIANT = { critical: 'rose', watch: 'amber', info: 'blue' };
@@ -32,8 +33,10 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardStats, setDashboardStats] = useState(null);
   const [taskStats, setTaskStats] = useState(null);
+  const [predictionStats, setPredictionStats] = useState(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [recentTasks, setRecentTasks] = useState([]);
+  const [recentPredictions, setRecentPredictions] = useState([]);
   const navigate = useNavigate();
 
   const fetchDashboardStats = async () => {
@@ -55,6 +58,16 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchPredictionStats = async () => {
+    try {
+      const stats = await predictionsApi.getDashboardStats();
+      setPredictionStats(stats);
+      setRecentPredictions(stats.recentPredictions || []);
+    } catch (err) {
+      console.error('Failed to fetch prediction stats:', err);
+    }
+  };
+
   const fetchUpcomingAppointments = async () => {
     try {
       const result = await appointmentsApi.list({ 
@@ -71,13 +84,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([fetchDashboardStats(), fetchTaskStats(), fetchUpcomingAppointments()]);
+      await Promise.all([fetchDashboardStats(), fetchTaskStats(), fetchPredictionStats(), fetchUpcomingAppointments()]);
       setIsLoading(false);
     };
     loadData();
   }, []);
 
-  const updatedKpiMetrics = dashboardStats && taskStats ? [
+  const updatedKpiMetrics = dashboardStats && taskStats && predictionStats ? [
     {
       id: 'kpi-today-appointments',
       label: "Today's Appointments",
@@ -109,11 +122,11 @@ export default function DashboardPage() {
       tone: 'rose',
     },
     {
-      id: 'kpi-predicted-bottlenecks',
-      label: 'Predicted Bottlenecks (24h)',
-      value: 3,
+      id: 'kpi-ai-predictions',
+      label: 'AI Predictions',
+      value: predictionStats.totalPredictions,
       unit: '',
-      delta: 1,
+      delta: 0,
       deltaDirection: 'up',
       trend: kpiMetrics[3].trend,
       tone: 'amber',
@@ -295,7 +308,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
         {/* Recent tasks */}
         <Card padded={false}>
           <div className="flex items-center justify-between border-b border-border p-5">
@@ -328,6 +341,46 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <StatusBadge status={task.status.toLowerCase().replace(' ', '-')} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        {/* Recent AI predictions */}
+        <Card padded={false}>
+          <div className="flex items-center justify-between border-b border-border p-5">
+            <div>
+              <CardTitle>Recent AI Predictions</CardTitle>
+              <CardDescription>Latest diagnostic predictions</CardDescription>
+            </div>
+            <Link to="/predictions" className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          {isLoading ? (
+            <div className="p-5">
+              <LoadingSkeleton variant="list" rows={4} />
+            </div>
+          ) : recentPredictions.length === 0 ? (
+            <div className="p-5">
+              <EmptyState title="No recent predictions" description="There are no recent AI predictions." />
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {recentPredictions.slice(0, 5).map((prediction) => (
+                <li key={prediction._id} className="flex items-center justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-ink">
+                      {prediction.animalName}
+                    </p>
+                    <p className="mt-0.5 text-xs text-ink-faint">
+                      {prediction.species} · {prediction.breed || 'Unknown'} · {prediction.aiResult?.riskLevel || 'Unknown'}
+                    </p>
+                  </div>
+                  <Badge variant={SEVERITY_VARIANT[prediction.aiResult?.riskLevel === 'Critical' ? 'critical' : prediction.aiResult?.riskLevel === 'High' ? 'watch' : 'info'] || 'neutral'}>
+                    {prediction.aiResult?.riskLevel || 'Unknown'}
+                  </Badge>
                 </li>
               ))}
             </ul>

@@ -82,6 +82,25 @@ export const createTaskSchema = z.object({
 
 export const updateTaskSchema = createTaskSchema.partial();
 
+export const createPredictionSchema = z.object({
+  predictionId: z.string().min(1, 'Prediction ID is required'),
+  animalName: z.string().min(1, 'Animal name is required'),
+  species: z.string().min(1, 'Species is required'),
+  breed: z.string().optional(),
+  age: z.number().min(0).optional(),
+  weight: z.number().min(0).optional(),
+  gender: z.enum(['Male', 'Female', 'Unknown']).optional(),
+  symptoms: z.string().optional(),
+  medicalHistory: z.string().optional(),
+  currentMedications: z.string().optional(),
+  bodyTemperature: z.number().optional(),
+  heartRate: z.number().min(0).optional(),
+  respiratoryRate: z.number().min(0).optional(),
+  laboratoryResults: z.string().optional(),
+  additionalNotes: z.string().optional(),
+  createdBy: z.string().optional(),
+});
+
 export const validators = {
   createVeterinarian: createVeterinarianSchema,
   updateVeterinarian: updateVeterinarianSchema,
@@ -89,4 +108,5 @@ export const validators = {
   updateAppointment: updateAppointmentSchema,
   createTask: createTaskSchema,
   updateTask: updateTaskSchema,
+  createPrediction: createPredictionSchema,
 };

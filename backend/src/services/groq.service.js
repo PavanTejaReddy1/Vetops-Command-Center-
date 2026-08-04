@@ -13,91 +13,128 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 /**
  * Generate bottleneck predictions based on operational data
  */
 export async function generateBottleneckPrediction(operationalData) {
-  try {
-    const prompt = buildBottleneckPrompt(operationalData);
-    const response = await groq.chat.completions.create({
-      model: 'llama3-70b-8192',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert veterinary operations analyst. Analyze operational data to predict potential bottlenecks and provide actionable recommendations.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 1024,
-    });
+  let lastError;
+  
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const prompt = operationalData.prompt || buildBottleneckPrompt(operationalData);
+      const response = await groq.chat.completions.create({
+        model: 'llama3-70b-8192',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert veterinary operations analyst. Analyze operational data to predict potential bottlenecks and provide actionable recommendations.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
+      });
 
-    return response.choices[0]?.message?.content || 'No prediction generated';
-  } catch (error) {
-    console.error('Groq API error:', error);
-    throw new Error(`Failed to generate prediction: ${error.message}`);
+      return response.choices[0]?.message?.content || 'No prediction generated';
+    } catch (error) {
+      lastError = error;
+      console.error(`Groq API error (attempt ${attempt}/${MAX_RETRIES}):`, error.message);
+      
+      if (attempt < MAX_RETRIES) {
+        await sleep(RETRY_DELAY * attempt);
+      }
+    }
   }
+  
+  throw new Error(`Failed to generate prediction after ${MAX_RETRIES} attempts: ${lastError.message}`);
 }
 
 /**
  * Generate AI review recommendations
  */
 export async function generateAIReviewRecommendations(reviewData) {
-  try {
-    const prompt = buildReviewPrompt(reviewData);
-    const response = await groq.chat.completions.create({
-      model: 'llama3-70b-8192',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a veterinary AI assistant providing review recommendations for clinical cases.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.6,
-      max_tokens: 1024,
-    });
+  let lastError;
+  
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const prompt = buildReviewPrompt(reviewData);
+      const response = await groq.chat.completions.create({
+        model: 'llama3-70b-8192',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a veterinary AI assistant providing review recommendations for clinical cases.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.6,
+        max_tokens: 1024,
+      });
 
-    return response.choices[0]?.message?.content || 'No recommendations generated';
-  } catch (error) {
-    console.error('Groq API error:', error);
-    throw new Error(`Failed to generate recommendations: ${error.message}`);
+      return response.choices[0]?.message?.content || 'No recommendations generated';
+    } catch (error) {
+      lastError = error;
+      console.error(`Groq API error (attempt ${attempt}/${MAX_RETRIES}):`, error.message);
+      
+      if (attempt < MAX_RETRIES) {
+        await sleep(RETRY_DELAY * attempt);
+      }
+    }
   }
+  
+  throw new Error(`Failed to generate recommendations after ${MAX_RETRIES} attempts: ${lastError.message}`);
 }
 
 /**
  * Generate natural-language report summaries
  */
 export async function generateReportSummary(reportData) {
-  try {
-    const prompt = buildReportPrompt(reportData);
-    const response = await groq.chat.completions.create({
-      model: 'llama3-70b-8192',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a veterinary operations analyst creating concise, actionable summaries of operational reports.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.5,
-      max_tokens: 512,
-    });
+  let lastError;
+  
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const prompt = buildReportPrompt(reportData);
+      const response = await groq.chat.completions.create({
+        model: 'llama3-70b-8192',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a veterinary operations analyst creating concise, actionable summaries of operational reports.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.5,
+        max_tokens: 512,
+      });
 
-    return response.choices[0]?.message?.content || 'No summary generated';
-  } catch (error) {
-    console.error('Groq API error:', error);
-    throw new Error(`Failed to generate summary: ${error.message}`);
+      return response.choices[0]?.message?.content || 'No summary generated';
+    } catch (error) {
+      lastError = error;
+      console.error(`Groq API error (attempt ${attempt}/${MAX_RETRIES}):`, error.message);
+      
+      if (attempt < MAX_RETRIES) {
+        await sleep(RETRY_DELAY * attempt);
+      }
+    }
   }
+  
+  throw new Error(`Failed to generate summary after ${MAX_RETRIES} attempts: ${lastError.message}`);
 }
 
 function buildBottleneckPrompt(data) {

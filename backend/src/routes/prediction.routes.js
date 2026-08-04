@@ -8,9 +8,9 @@ import { requireAuth } from '../middleware/requireAuth.js';
 const router = Router();
 
 router.get('/', requireAuth, predictionController.list);
+router.get('/dashboard-stats', requireAuth, predictionController.getDashboardStats);
 router.get('/:id', requireAuth, predictionController.getById);
 router.post('/', requireAuth, predictionController.create);
-router.put('/:id', requireAuth, predictionController.update);
 router.delete('/:id', requireAuth, predictionController.remove);
 
 export default router;
