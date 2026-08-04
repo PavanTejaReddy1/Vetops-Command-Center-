@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Bell,
@@ -17,7 +17,7 @@ import { Button } from '../components/ui/Button';
 import { useTheme } from '../hooks/useTheme';
 import { useDisclosure } from '../hooks/useDisclosure';
 import { useAuth } from '../app/providers/AuthProvider';
-import { notifications as dummyNotifications } from '../data/notifications';
+import { notificationsApi } from '../lib/api/notifications';
 import { formatRelativeTime, initials } from '../lib/utils/formatters';
 import { cn } from '../lib/utils/cn';
 
@@ -34,6 +34,41 @@ export function Topbar({ onOpenMobileSidebar }) {
   const notifPanel = useDisclosure();
   const profilePanel = useDisclosure();
   const quickActions = useDisclosure();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifications = async () => {
+    try {
+      const result = await notificationsApi.list({ limit: 5 });
+      setNotifications(result.data);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  };
+
+  const fetchUnreadCount = async () => {
+    try {
+      const result = await notificationsApi.getUnreadCount();
+      setUnreadCount(result.data.count);
+    } catch (err) {
+      console.error('Failed to fetch unread count:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    fetchUnreadCount();
+  }, []);
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await notificationsApi.markAsRead(id);
+      setNotifications(notifications.map(n => n._id === id ? { ...n, read: true } : n));
+      fetchUnreadCount();
+    } catch (err) {
+      console.error('Failed to mark as read:', err);
+    }
+  };
 
   const currentUser = useMemo(
     () => ({
@@ -43,7 +78,6 @@ export function Topbar({ onOpenMobileSidebar }) {
     [user]
   );
 
-  const unreadCount = useMemo(() => dummyNotifications.filter((n) => !n.read).length, []);
   const today = useMemo(
     () => new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date()),
     []
@@ -120,15 +154,23 @@ export function Topbar({ onOpenMobileSidebar }) {
                   </Link>
                 </div>
                 <ul className="max-h-80 overflow-y-auto">
-                  {dummyNotifications.slice(0, 5).map((n) => (
-                    <li key={n.id} className="flex gap-2.5 border-b border-border px-4 py-3 last:border-0 hover:bg-canvas/60">
-                      <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-transparent' : 'bg-brand-500')} />
-                      <div>
-                        <p className="text-sm text-ink">{n.title}</p>
-                        <p className="mt-0.5 text-xs text-ink-faint">{formatRelativeTime(n.timestamp)}</p>
-                      </div>
-                    </li>
-                  ))}
+                  {notifications.length === 0 ? (
+                    <li className="px-4 py-3 text-sm text-ink-muted">No notifications</li>
+                  ) : (
+                    notifications.map((n) => (
+                      <li 
+                        key={n._id} 
+                        className="flex gap-2.5 border-b border-border px-4 py-3 last:border-0 hover:bg-canvas/60"
+                        onClick={() => !n.read && handleMarkAsRead(n._id)}
+                      >
+                        <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-transparent' : 'bg-brand-500')} />
+                        <div>
+                          <p className="text-sm text-ink">{n.title}</p>
+                          <p className="mt-0.5 text-xs text-ink-faint">{formatRelativeTime(n.createdAt)}</p>
+                        </div>
+                      </li>
+                    ))
+                  )}
                 </ul>
               </div>
             </>

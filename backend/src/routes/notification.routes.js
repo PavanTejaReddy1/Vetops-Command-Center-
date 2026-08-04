@@ -8,9 +8,11 @@ import { requireAuth } from '../middleware/requireAuth.js';
 const router = Router();
 
 router.get('/', requireAuth, notificationController.list);
+router.get('/unread-count', requireAuth, notificationController.getUnreadCount);
 router.get('/:id', requireAuth, notificationController.getById);
 router.post('/', requireAuth, notificationController.create);
-router.put('/:id', requireAuth, notificationController.update);
+router.patch('/:id/mark-read', requireAuth, notificationController.markAsRead);
+router.post('/mark-all-read', requireAuth, notificationController.markAllAsRead);
 router.delete('/:id', requireAuth, notificationController.remove);
 
 export default router;
