@@ -1,24 +1,92 @@
 import { veterinarianService } from '../services/veterinarian.service.js';
+import { validators } from '../validators/index.js';
 
-/**
- * Veterinarians controller — PHASE 2.
- * Handlers are stubbed to return 501 Not Implemented so the API surface
- * (routes + shape) is real and testable even before business logic lands.
- */
 export const veterinarianController = {
   async list(req, res) {
-    res.status(501).json({ message: 'Veterinarians: list endpoint not implemented yet (Phase 1 scaffold).' });
+    try {
+      const { search, specialization, department, status, page, limit, sortBy, sortOrder } = req.query;
+      const result = await veterinarianService.list({
+        search,
+        specialization,
+        department,
+        status,
+        page: parseInt(page) || 1,
+        limit: parseInt(limit) || 10,
+        sortBy: sortBy || 'createdAt',
+        sortOrder: sortOrder || 'desc',
+      });
+      res.json(result);
+    } catch (error) {
+      console.error('List veterinarians error:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch veterinarians' });
+    }
   },
+
   async getById(req, res) {
-    res.status(501).json({ message: 'Veterinarians: getById endpoint not implemented yet (Phase 1 scaffold).' });
+    try {
+      const { id } = req.params;
+      const veterinarian = await veterinarianService.getById(id);
+      res.json({ data: veterinarian });
+    } catch (error) {
+      console.error('Get veterinarian error:', error);
+      if (error.message === 'Veterinarian not found') {
+        return res.status(404).json({ message: error.message });
+      }
+      res.status(500).json({ message: error.message || 'Failed to fetch veterinarian' });
+    }
   },
+
   async create(req, res) {
-    res.status(501).json({ message: 'Veterinarians: create endpoint not implemented yet (Phase 1 scaffold).' });
+    try {
+      const validationResult = validators.createVeterinarian.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: 'Validation failed', 
+          errors: validationResult.error.errors 
+        });
+      }
+      const data = validationResult.data;
+      const veterinarian = await veterinarianService.create(data);
+      res.status(201).json({ data: veterinarian, message: 'Veterinarian created successfully' });
+    } catch (error) {
+      console.error('Create veterinarian error:', error);
+      res.status(400).json({ message: error.message || 'Failed to create veterinarian' });
+    }
   },
+
   async update(req, res) {
-    res.status(501).json({ message: 'Veterinarians: update endpoint not implemented yet (Phase 1 scaffold).' });
+    try {
+      const validationResult = validators.updateVeterinarian.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: 'Validation failed', 
+          errors: validationResult.error.errors 
+        });
+      }
+      const { id } = req.params;
+      const data = validationResult.data;
+      const veterinarian = await veterinarianService.update(id, data);
+      res.json({ data: veterinarian, message: 'Veterinarian updated successfully' });
+    } catch (error) {
+      console.error('Update veterinarian error:', error);
+      if (error.message === 'Veterinarian not found') {
+        return res.status(404).json({ message: error.message });
+      }
+      res.status(400).json({ message: error.message || 'Failed to update veterinarian' });
+    }
   },
+
   async remove(req, res) {
-    res.status(501).json({ message: 'Veterinarians: remove endpoint not implemented yet (Phase 1 scaffold).' });
+    try {
+      const { id } = req.params;
+      await veterinarianService.remove(id);
+      res.json({ message: 'Veterinarian deleted successfully' });
+    } catch (error) {
+      console.error('Delete veterinarian error:', error);
+      if (error.message === 'Veterinarian not found') {
+        return res.status(404).json({ message: error.message });
+      }
+      res.status(500).json({ message: error.message || 'Failed to delete veterinarian' });
+    }
   },
 };
