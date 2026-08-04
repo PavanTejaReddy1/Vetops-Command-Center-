@@ -1,164 +1,388 @@
 # VetOps Command Center
 
-An AI-powered Veterinary Care Predictive Operations Command Center. Phase 1 delivers
-the **frontend foundation and project architecture only** — no business logic, no live
-backend APIs, no MongoDB connection, no Groq AI integration. Everything is built to be
-extended in Phase 2 without restructuring.
+An AI-powered Veterinary Care Predictive Operations Command Center. A production-ready full-stack application for managing veterinary hospital operations with AI-powered predictions, forecasting, and comprehensive analytics.
 
-## Quick start
+## Features
 
-```bash
-# Frontend
-cd frontend
-npm install
-npm run dev        # http://localhost:5173
+- **Dashboard**: Real-time operational overview with KPI cards, predictive alerts, and workflow queue
+- **Veterinarians Management**: CRUD operations for veterinary staff with workload tracking
+- **Appointments Management**: Schedule and manage patient appointments with priority and status tracking
+- **Task Assignment**: Create, assign, and track tasks with priority levels and due dates
+- **AI Predictions**: AI-powered diagnostic predictions using Groq API with risk assessment
+- **Forecast Capacity**: Predictive analytics for operational capacity and resource planning
+- **Reports & Analytics**: Comprehensive operational reports with export functionality (CSV/JSON)
+- **Notifications**: Real-time notification system with read/unread states and filtering
+- **Audit Logs**: Complete audit trail of all system actions for compliance
+- **Settings**: Configurable application settings for organization, appearance, notifications, and security
 
-# Backend (structure only — boots, but every route returns 501)
-cd backend
-npm install
-npm run dev         # http://localhost:5000/health
-```
+## Tech Stack
 
----
+### Frontend
+- **React 18** - UI framework
+- **Vite** - Build tool and dev server
+- **React Router** - Client-side routing
+- **TailwindCSS** - Utility-first CSS framework
+- **Axios** - HTTP client
+- **Lucide React** - Icon library
+- **Sora, Inter, IBM Plex Mono** - Typography
 
-## Frontend architecture (`/frontend`)
+### Backend
+- **Node.js 18+** - Runtime environment
+- **Express.js** - Web framework
+- **MongoDB** - Database
+- **Mongoose** - ODM for MongoDB
+- **JWT** - Authentication
+- **bcrypt** - Password hashing
+- **Groq SDK** - AI integration
+- **Zod** - Schema validation
+- **Helmet** - Security headers
+- **Compression** - Response compression
+- **Express Rate Limit** - Rate limiting
+- **Morgan** - Request logging
 
+## Architecture
+
+The application follows a clean architecture pattern with clear separation of concerns:
+
+### Frontend Architecture
 ```
 frontend/
 ├── src/
 │   ├── app/
-│   │   ├── router.jsx              # Route table, lazy-loaded per module
+│   │   ├── router.jsx              # Route configuration with lazy loading
 │   │   └── providers/
-│   │       ├── AppProviders.jsx    # Single composition point for all context providers
-│   │       └── ThemeProvider.jsx   # Light/dark theme state (class-based, persisted)
-│   │
+│   │       ├── AppProviders.jsx    # Context providers composition
+│   │       └── ThemeProvider.jsx   # Theme management
 │   ├── layouts/
-│   │   ├── DashboardLayout.jsx     # Shell: Sidebar + Topbar + <Outlet/>
-│   │   ├── Sidebar.jsx             # Collapsible desktop rail + mobile drawer
-│   │   ├── Topbar.jsx              # Search, notifications, quick actions, theme, profile
-│   │   └── Breadcrumbs.jsx         # Route-derived breadcrumb trail
-│   │
-│   ├── components/ui/              # Reusable, presentation-only design system
-│   │   ├── Button, Card, KpiCard, Badge, StatusBadge, Modal, Input,
-│   │   │   Table/DataTable, Pagination, SearchBar, FilterBar, Alert,
-│   │   │   EmptyState, LoadingSkeleton, PageHeader, VitalPulse
-│   │   └── index.js                # Barrel export
-│   │
-│   ├── pages/                      # One folder per sidebar module
-│   │   ├── Dashboard/
-│   │   ├── WorkflowQueue/
-│   │   ├── ForecastCapacity/
-│   │   ├── TaskAssignment/
-│   │   ├── Predictions/
-│   │   ├── AIReview/
-│   │   ├── Reports/
-│   │   ├── Notifications/
-│   │   ├── Users/
-│   │   ├── AuditLogs/
-│   │   ├── Settings/
-│   │   └── NotFound/
-│   │
-│   ├── data/                       # Dummy data — deletable wholesale once APIs exist
-│   │   ├── veterinarians.js, petOwners.js, animals.js, appointments.js,
-│   │   │   tasks.js, alerts.js, notifications.js, kpiMetrics.js
-│   │
-│   ├── hooks/                      # useTheme, useDisclosure, useBreadcrumbs
+│   │   ├── DashboardLayout.jsx     # Main layout shell
+│   │   ├── Sidebar.jsx             # Navigation sidebar
+│   │   ├── Topbar.jsx              # Top navigation bar
+│   │   └── Breadcrumbs.jsx         # Breadcrumb navigation
+│   ├── components/ui/              # Reusable UI components
+│   ├── pages/                      # Feature pages
+│   ├── hooks/                      # Custom React hooks
 │   ├── lib/
-│   │   ├── api/axiosClient.js      # Pre-configured Axios instance (not yet called anywhere)
-│   │   ├── utils/                  # cn() class merger, formatters
-│   │   └── constants/navigation.js # Single source of truth for sidebar + breadcrumbs
-│   └── config/site.js              # App name, org name, etc.
-│
-├── tailwind.config.js               # Design tokens (see "Design system" below)
-├── index.css                        # CSS variables for light/dark theme
-└── index.html
+│   │   ├── api/                    # API client services
+│   │   └── utils/                  # Utility functions
+│   └── config/                     # Configuration files
 ```
 
-### Why it's structured this way
-
-- **`data/` is a drop-in replacement boundary.** Every page imports dummy data from
-  `src/data/*`. In Phase 2, each file is replaced by a call through `lib/api/axiosClient.js`
-  to the matching backend route — no page component needs to change shape, only its data
-  source.
-- **`components/ui` never contains business logic or fetches.** They're pure, reusable,
-  and already handle their own loading (`LoadingSkeleton`) and empty (`EmptyState`) states,
-  so every page gets consistent states for free.
-- **`lib/constants/navigation.js` is the single source of truth** for the sidebar, the
-  breadcrumb system, and (in Phase 2) any command palette — a new module is registered once.
-- **Routes are lazy-loaded** (`React.lazy` + `Suspense`) per module, so the initial bundle
-  only pays for the Dashboard, and each other module ships as its own chunk (verified via
-  `npm run build`).
-
-### Design system
-
-Built around the product's subject matter — an operations "vitals monitor" for a
-veterinary hospital — rather than generic Tailwind defaults:
-
-- **Color:** a clinical teal (`brand`) as the primary action/identity color, with a
-  vitals-monitor-inspired signal palette (`signal.amber` / `signal.rose` / `signal.blue` /
-  `signal.success`) used consistently for severity, status, and trend direction across the
-  whole app.
-- **Type:** Sora (display/headings), Inter (body), IBM Plex Mono (KPI numbers, timestamps,
-  IDs — reinforces the "instrument panel" feel of an ops command center).
-- **Signature motif — `VitalPulse`:** a minimal EKG/heartbeat-line SVG component used as
-  the KPI trend sparkline and as an animated loading cue, tying "operational health" back
-  to the veterinary domain instead of a generic spinner.
-- **Theming:** implemented with CSS variables in `index.css` (`:root` / `.dark`), consumed
-  through Tailwind's `rgb(var(--token) / <alpha-value>)` pattern — components never branch
-  on theme, they only read tokens, so adding a third theme later is a CSS-only change.
-
-### Responsive behavior
-
-- **Desktop (`lg+`):** fixed sidebar (collapsible to an icon rail), full topbar.
-- **Tablet:** same as desktop; sidebar remains usable in collapsed form as the viewport narrows.
-- **Mobile:** sidebar becomes an off-canvas drawer (hamburger in the topbar); search collapses
-  out of the topbar; KPI grids and tables reflow to single-column / horizontal-scroll.
-
----
-
-## Backend architecture (`/backend`) — structure only
-
-The backend **boots and serves real routes**, but every handler intentionally returns
-`501 Not Implemented` and MongoDB is never connected — this proves the API surface and
-folder structure are correct without pretending Phase 1 has real business logic.
-
+### Backend Architecture
 ```
 backend/
-├── server.js                 # Entry point — starts Express, does NOT connect MongoDB
 ├── src/
-│   ├── app.js                 # Express app factory (middleware, routers, error handling)
+│   ├── app.js                      # Express app factory
 │   ├── config/
-│   │   └── database.js        # Mongoose connection — stubbed, throws if called (Phase 2)
-│   ├── routes/                # One router per module, all mounted under /api/v1
-│   │   └── index.js           # Aggregates every module router
-│   ├── controllers/            # One per module — handlers return 501 for now
-│   ├── services/               # One per module — business logic layer, throws "not implemented"
-│   │   └── groq.service.js   # AI integration entry point (Phase 2, not wired up)
-│   ├── models/                 # One per module — Mongoose schema placeholders + comments
-│   ├── middleware/
-│   │   ├── requireAuth.js     # No-op today; JWT verification shape documented for Phase 2
-│   │   ├── notFoundHandler.js
-│   │   └── errorHandler.js
-│   ├── validators/            # zod schema placeholders (mirrors frontend's zod usage)
-│   └── utils/
-│       └── asyncHandler.js
+│   │   └── database.js             # MongoDB connection
+│   ├── routes/                    # API route definitions
+│   ├── controllers/                # Request handlers
+│   ├── services/                   # Business logic layer
+│   ├── models/                     # Mongoose schemas
+│   ├── middleware/                 # Express middleware
+│   ├── validators/                 # Request validation
+│   └── utils/                      # Utility functions
 ```
 
-Every module (`veterinarians`, `appointments`, `forecasts`, `tasks`, `predictions`,
-`ai-reviews`, `reports`, `notifications`, `users`, `audit-logs`, `settings`) follows the
-identical `route → controller → service → model` layering, so Phase 2 work is: implement
-the model schema, implement the service query, remove the `501` stub from the controller —
-routing and middleware don't change.
+## Installation
 
----
+### Prerequisites
+- Node.js 18 or higher
+- MongoDB (local or Atlas)
+- npm or yarn
 
-## What Phase 1 deliberately does NOT include
+### Clone the repository
+```bash
+git clone https://github.com/PavanTejaReddy1/Vetops-Command-Center-.git
+cd Vetops-Command-Center-
+```
 
-- No business logic (filtering/sorting is client-side/demo only, not derived from real rules)
-- No live API calls from the frontend — everything reads `src/data/*`
-- No MongoDB connection
-- No Groq AI integration
-- No authentication enforcement (middleware exists as a documented no-op)
+### Install dependencies
 
-These are all Phase 2+ scope, and the structure above is built so none of them require
-reshaping what already exists.
+**Frontend:**
+```bash
+cd frontend
+npm install
+```
+
+**Backend:**
+```bash
+cd backend
+npm install
+```
+
+## Environment Variables
+
+Create a `.env` file in the `backend` directory based on `.env.example`:
+
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+
+# Database Configuration
+MONGODB_URI=mongodb://localhost:27017/vetops
+
+# Authentication
+JWT_SECRET=your-super-secret-jwt-key-at-least-32-characters-long
+JWT_EXPIRES_IN=7d
+
+# AI Integration (Groq)
+GROQ_API_KEY=your-groq-api-key-here
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# CORS
+CORS_ORIGIN=http://localhost:5173
+```
+
+## Running the Application
+
+### Development Mode
+
+**Start Backend:**
+```bash
+cd backend
+npm run dev
+```
+Backend will run on http://localhost:5000
+
+**Start Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+Frontend will run on http://localhost:5173
+
+### Production Mode
+
+**Build Frontend:**
+```bash
+cd frontend
+npm run build
+npm run preview
+```
+
+**Start Backend:**
+```bash
+cd backend
+npm start
+```
+
+## Seeding Database
+
+Create an admin user:
+```bash
+cd backend
+npm run seed:admin
+```
+
+This will create an admin user with:
+- Email: admin@vetops.com
+- Password: admin123
+- Role: admin
+
+**Important:** Change the default password after first login.
+
+## AI Configuration
+
+To enable AI predictions, you need a Groq API key:
+
+1. Sign up at [Groq Console](https://console.groq.com/)
+2. Create an API key
+3. Add it to your `.env` file:
+   ```env
+   GROQ_API_KEY=your-groq-api-key-here
+   ```
+
+The AI module provides:
+- Diagnostic predictions based on symptoms and medical history
+- Risk level assessment (Low, Medium, High, Critical)
+- Confidence scores
+- Recommended tests and treatments
+- Follow-up advice
+
+## API Documentation
+
+### Authentication
+All API endpoints (except `/health` and `/api/v1/auth/login`) require authentication via JWT token.
+
+### Base URL
+- Development: `http://localhost:5000/api/v1`
+- Production: Configured via `FRONTEND_URL`
+
+### Main Endpoints
+
+#### Authentication
+- `POST /auth/login` - User login
+- `POST /auth/register` - User registration
+
+#### Veterinarians
+- `GET /veterinarians` - List all veterinarians
+- `GET /veterinarians/:id` - Get veterinarian by ID
+- `POST /veterinarians` - Create veterinarian
+- `PUT /veterinarians/:id` - Update veterinarian
+- `DELETE /veterinarians/:id` - Delete veterinarian
+
+#### Appointments
+- `GET /appointments` - List appointments with filters
+- `GET /appointments/:id` - Get appointment by ID
+- `POST /appointments` - Create appointment
+- `PUT /appointments/:id` - Update appointment
+- `DELETE /appointments/:id` - Delete appointment
+
+#### Tasks
+- `GET /tasks` - List tasks with filters
+- `GET /tasks/:id` - Get task by ID
+- `POST /tasks` - Create task
+- `PUT /tasks/:id` - Update task
+- `DELETE /tasks/:id` - Delete task
+
+#### Predictions
+- `GET /predictions` - List predictions
+- `GET /predictions/:id` - Get prediction by ID
+- `POST /predictions` - Create AI prediction
+- `PUT /predictions/:id` - Update prediction
+- `DELETE /predictions/:id` - Delete prediction
+
+#### Forecasts
+- `GET /forecasts/summary` - Forecast summary
+- `GET /forecasts/appointment-trends` - Appointment trends
+- `GET /forecasts/veterinarian-workload` - Veterinarian workload
+- `GET /forecasts/prediction-trends` - Prediction trends
+- `GET /forecasts/risk-distribution` - Risk distribution
+
+#### Reports
+- `GET /reports/summary` - Report summary
+- `GET /reports/appointment-analytics` - Appointment analytics
+- `GET /reports/export/:format` - Export reports (CSV/JSON)
+
+#### Notifications
+- `GET /notifications` - List notifications
+- `GET /notifications/:id` - Get notification by ID
+- `PATCH /notifications/:id/read` - Mark as read
+- `PATCH /notifications/read-all` - Mark all as read
+- `GET /notifications/unread-count` - Get unread count
+
+#### Audit Logs
+- `GET /audit-logs` - List audit logs with filters
+- `GET /audit-logs/:id` - Get audit log by ID
+- `POST /audit-logs` - Create audit log
+- `GET /audit-logs/export/:format` - Export audit logs (CSV/JSON)
+
+#### Settings
+- `GET /settings` - Get all settings
+- `GET /settings/:category` - Get settings by category
+- `PUT /settings/:key` - Update single setting
+- `PUT /settings/category/:category` - Update category settings
+- `POST /settings/:category/reset` - Reset to defaults
+
+## Deployment
+
+### Docker Deployment
+
+Build and run using Docker Compose:
+
+```bash
+# Create .env file in root directory
+cp .env.example .env
+
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+Services:
+- **Frontend**: Nginx serving React build on port 80
+- **Backend**: Node.js API on port 5000
+- **MongoDB**: MongoDB on port 27017
+
+### Manual Deployment
+
+**Frontend:**
+1. Build the application: `npm run build`
+2. Deploy the `dist` folder to your web server (Nginx, Apache, Vercel, Netlify, etc.)
+3. Configure reverse proxy to handle API routes
+
+**Backend:**
+1. Set environment variables
+2. Install dependencies: `npm ci --only=production`
+3. Start the server: `npm start`
+4. Use PM2 for process management in production
+
+### CI/CD
+
+The project includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that:
+- Installs dependencies
+- Runs linting
+- Builds frontend and backend
+- Runs tests
+- Builds Docker images
+
+## Security Features
+
+- **Helmet**: Security headers for Express
+- **CORS**: Configured cross-origin resource sharing
+- **Rate Limiting**: API rate limiting to prevent abuse
+- **JWT Authentication**: Secure token-based authentication
+- **Password Hashing**: bcrypt for secure password storage
+- **Environment Validation**: Validates required environment variables on startup
+- **Audit Logging**: Complete audit trail of all system actions
+- **Input Validation**: Zod schemas for request validation
+
+## Performance Optimizations
+
+- **MongoDB Indexes**: Optimized queries with proper indexes
+- **Response Compression**: Gzip compression for API responses
+- **Frontend Lazy Loading**: Code splitting for optimal bundle size
+- **React.memo**: Optimized re-renders where applicable
+- **API Response Caching**: Where appropriate
+
+## Future Improvements
+
+- [ ] Add comprehensive unit and integration tests
+- [ ] Implement WebSocket for real-time updates
+- [ ] Add file upload functionality for attachments
+- [ ] Implement advanced reporting with custom queries
+- [ ] Add multi-language support (i18n)
+- [ ] Implement offline support with service workers
+- [ ] Add mobile app (React Native)
+- [ ] Implement advanced AI models
+- [ ] Add data visualization with more chart types
+- [ ] Implement role-based access control (RBAC)
+
+## Screenshots
+
+*Placeholder for application screenshots*
+
+## Troubleshooting
+
+### MongoDB Connection Issues
+- Ensure MongoDB is running
+- Check `MONGODB_URI` in `.env`
+- Verify network connectivity
+
+### AI Predictions Not Working
+- Verify `GROQ_API_KEY` is set correctly
+- Check API key has sufficient credits
+- Review console for error messages
+
+### Frontend Build Errors
+- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+- Check Node.js version (requires 18+)
+- Verify all environment variables are set
+
+## License
+
+This project is proprietary software. All rights reserved.
+
+## Support
+
+For support and inquiries, please contact the development team.
