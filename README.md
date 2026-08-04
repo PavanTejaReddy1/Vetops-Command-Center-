@@ -2,7 +2,7 @@
 
 An AI-powered Veterinary Care Predictive Operations Command Center. Phase 1 delivers
 the **frontend foundation and project architecture only** — no business logic, no live
-backend APIs, no MongoDB connection, no Gemini AI integration. Everything is built to be
+backend APIs, no MongoDB connection, no Groq AI integration. Everything is built to be
 extended in Phase 2 without restructuring.
 
 ## Quick start
@@ -133,7 +133,7 @@ backend/
 │   │   └── index.js           # Aggregates every module router
 │   ├── controllers/            # One per module — handlers return 501 for now
 │   ├── services/               # One per module — business logic layer, throws "not implemented"
-│   │   └── gemini.service.js  # AI integration entry point (Phase 2, not wired up)
+│   │   └── groq.service.js   # AI integration entry point (Phase 2, not wired up)
 │   ├── models/                 # One per module — Mongoose schema placeholders + comments
 │   ├── middleware/
 │   │   ├── requireAuth.js     # No-op today; JWT verification shape documented for Phase 2
@@ -157,7 +157,7 @@ routing and middleware don't change.
 - No business logic (filtering/sorting is client-side/demo only, not derived from real rules)
 - No live API calls from the frontend — everything reads `src/data/*`
 - No MongoDB connection
-- No Gemini AI integration
+- No Groq AI integration
 - No authentication enforcement (middleware exists as a documented no-op)
 
 These are all Phase 2+ scope, and the structure above is built so none of them require
