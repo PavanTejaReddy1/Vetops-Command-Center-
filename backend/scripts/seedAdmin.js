@@ -17,20 +17,23 @@ async function seedAdmin() {
     const existingAdmin = await Admin.findOne({ email: 'admin@vetops.com' });
 
     if (existingAdmin) {
-      console.log('Admin user already exists');
-      process.exit(0);
+      console.log('Admin user already exists, resetting password...');
+      existingAdmin.password = 'admin123';
+      await existingAdmin.save();
+      console.log('Admin password reset successfully');
+    } else {
+      const admin = new Admin({
+        email: 'admin@vetops.com',
+        password: 'admin123',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'admin',
+      });
+
+      await admin.save();
+      console.log('Admin user created successfully');
     }
 
-    const admin = new Admin({
-      email: 'admin@vetops.com',
-      password: 'admin123',
-      firstName: 'Admin',
-      lastName: 'User',
-      role: 'admin',
-    });
-
-    await admin.save();
-    console.log('Admin user created successfully');
     console.log('Email: admin@vetops.com');
     console.log('Password: admin123');
     console.log('Please change the password after first login');
