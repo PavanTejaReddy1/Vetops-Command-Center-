@@ -88,6 +88,5 @@ export function createApp() {
   return app;
 }
 
-// Create and export app instance for Vercel serverless functions
-const app = createApp();
-export default app;
+// Export app instance for Vercel
+export default createApp();
