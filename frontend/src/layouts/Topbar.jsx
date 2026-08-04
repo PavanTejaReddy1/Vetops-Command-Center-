@@ -14,6 +14,8 @@ import {
 import { Breadcrumbs } from './Breadcrumbs';
 import { SearchBar } from '../components/ui/SearchBar';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
+import { Input } from '../components/ui/Input';
 import { useTheme } from '../hooks/useTheme';
 import { useDisclosure } from '../hooks/useDisclosure';
 import { useAuth } from '../app/providers/AuthProvider';
@@ -29,12 +31,17 @@ const QUICK_ACTIONS = [
 
 export function Topbar({ onOpenMobileSidebar }) {
   const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const notifPanel = useDisclosure();
   const profilePanel = useDisclosure();
   const quickActions = useDisclosure();
+  const newAppointmentModal = useDisclosure();
+  const newTaskModal = useDisclosure();
+  const inviteUserModal = useDisclosure();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -42,13 +49,13 @@ export function Topbar({ onOpenMobileSidebar }) {
     quickActions.close();
     switch (action) {
       case 'New Appointment':
-        navigate('/workflow-queue');
+        newAppointmentModal.open();
         break;
       case 'New Task':
-        navigate('/task-assignment');
+        newTaskModal.open();
         break;
       case 'Invite User':
-        navigate('/users');
+        inviteUserModal.open();
         break;
       default:
         break;
@@ -57,16 +64,51 @@ export function Topbar({ onOpenMobileSidebar }) {
 
   const handleSearch = (value) => {
     setSearch(value);
-    if (value.length > 2) {
-      // Navigate to predictions page with search query (as a placeholder for search functionality)
-      navigate('/predictions');
+    if (value.length > 0) {
+      setShowSearchResults(true);
+      // Placeholder search results - in production, this would call the API
+      const mockResults = [
+        { type: 'patient', name: 'Max', owner: 'John Smith', id: 1 },
+        { type: 'patient', name: 'Bella', owner: 'Jane Doe', id: 2 },
+        { type: 'task', name: 'Review lab results', assignedTo: 'Dr. Smith', id: 3 },
+        { type: 'appointment', name: 'Vaccination', patient: 'Max', time: '10:00 AM', id: 4 },
+      ].filter(item => 
+        item.name.toLowerCase().includes(value.toLowerCase()) ||
+        (item.owner && item.owner.toLowerCase().includes(value.toLowerCase())) ||
+        (item.patient && item.patient.toLowerCase().includes(value.toLowerCase()))
+      );
+      setSearchResults(mockResults);
+    } else {
+      setShowSearchResults(false);
+      setSearchResults([]);
     }
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (search.trim()) {
-      navigate('/predictions');
+      // Navigate to search results page
+      navigate(`/predictions?search=${encodeURIComponent(search)}`);
+      setShowSearchResults(false);
+    }
+  };
+
+  const handleSearchResultClick = (result) => {
+    setShowSearchResults(false);
+    setSearch('');
+    // Navigate based on result type
+    switch (result.type) {
+      case 'patient':
+        navigate('/workflow-queue');
+        break;
+      case 'task':
+        navigate('/task-assignment');
+        break;
+      case 'appointment':
+        navigate('/workflow-queue');
+        break;
+      default:
+        break;
     }
   };
 
@@ -131,13 +173,53 @@ export function Topbar({ onOpenMobileSidebar }) {
       </div>
 
       <div className="ml-auto flex flex-1 items-center justify-end gap-2 sm:gap-3">
-        <form onSubmit={handleSearchSubmit} className="hidden w-full max-w-xs sm:block">
-          <SearchBar
-            value={search}
-            onChange={handleSearch}
-            placeholder="Search patients, owners, tasks…"
-          />
-        </form>
+        <div className="relative hidden w-full max-w-xs sm:block">
+          <form onSubmit={handleSearchSubmit}>
+            <SearchBar
+              value={search}
+              onChange={handleSearch}
+              placeholder="Search patients, owners, tasks…"
+            />
+          </form>
+          {showSearchResults && searchResults.length > 0 && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowSearchResults(false)} />
+              <div className="absolute right-0 z-20 mt-2 w-full max-w-sm animate-fade-up rounded-lg border border-border bg-surface-raised shadow-popover">
+                <div className="max-h-80 overflow-y-auto">
+                  {searchResults.map((result) => (
+                    <button
+                      key={result.id}
+                      onClick={() => handleSearchResultClick(result)}
+                      className="flex w-full items-center gap-3 border-b border-border px-4 py-3 last:border-0 hover:bg-canvas/60 text-left"
+                    >
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">
+                        {result.type === 'patient' && '🐾'}
+                        {result.type === 'task' && '📋'}
+                        {result.type === 'appointment' && '📅'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-ink truncate">{result.name}</p>
+                        <p className="mt-0.5 text-xs text-ink-faint">
+                          {result.type === 'patient' && `Owner: ${result.owner}`}
+                          {result.type === 'task' && `Assigned to: ${result.assignedTo}`}
+                          {result.type === 'appointment' && `${result.patient} • ${result.time}`}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="border-t border-border px-4 py-2">
+                  <button
+                    onClick={handleSearchSubmit}
+                    className="text-xs font-medium text-brand-600 hover:text-brand-700"
+                  >
+                    View all results for "{search}"
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
 
         <span className="hidden whitespace-nowrap font-mono text-xs text-ink-faint lg:inline">{today}</span>
 
@@ -254,6 +336,112 @@ export function Topbar({ onOpenMobileSidebar }) {
           )}
         </div>
       </div>
+
+      {/* New Appointment Modal */}
+      <Modal
+        isOpen={newAppointmentModal.isOpen}
+        onClose={newAppointmentModal.close}
+        title="New Appointment"
+        description="Create a new appointment for a patient"
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={newAppointmentModal.close}>
+              Cancel
+            </Button>
+            <Button onClick={newAppointmentModal.close}>
+              Create Appointment
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-ink mb-2">Pet Name</label>
+            <Input placeholder="Enter pet name" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-ink mb-2">Owner Name</label>
+            <Input placeholder="Enter owner name" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-ink mb-2">Appointment Date</label>
+            <Input type="date" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-ink mb-2">Veterinarian</label>
+            <Input placeholder="Assign veterinarian" />
+          </div>
+        </div>
+      </Modal>
+
+      {/* New Task Modal */}
+      <Modal
+        isOpen={newTaskModal.isOpen}
+        onClose={newTaskModal.close}
+        title="New Task"
+        description="Create a new task assignment"
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={newTaskModal.close}>
+              Cancel
+            </Button>
+            <Button onClick={newTaskModal.close}>
+              Create Task
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-ink mb-2">Task Title</label>
+            <Input placeholder="Enter task title" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-ink mb-2">Description</label>
+            <Input placeholder="Enter task description" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-ink mb-2">Assign To</label>
+            <Input placeholder="Assign to staff member" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-ink mb-2">Due Date</label>
+            <Input type="date" />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Invite User Modal */}
+      <Modal
+        isOpen={inviteUserModal.isOpen}
+        onClose={inviteUserModal.close}
+        title="Invite User"
+        description="Invite a new user to the system"
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={inviteUserModal.close}>
+              Cancel
+            </Button>
+            <Button onClick={inviteUserModal.close}>
+              Send Invite
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-ink mb-2">Email Address</label>
+            <Input type="email" placeholder="Enter email address" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-ink mb-2">Role</label>
+            <Input placeholder="Select role" />
+          </div>
+        </div>
+      </Modal>
     </header>
   );
 }
