@@ -11,12 +11,23 @@ import { alerts } from '../../data/alerts';
 
 export default function AIReviewPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const reviewQueue = alerts.filter((a) => a.severity !== 'info');
+  const [reviewQueue, setReviewQueue] = useState([]);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 700);
+    const t = setTimeout(() => {
+      setReviewQueue(alerts.filter((a) => a.severity !== 'info'));
+      setIsLoading(false);
+    }, 700);
     return () => clearTimeout(t);
   }, []);
+
+  const handleApprove = (id) => {
+    setReviewQueue((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleDismiss = (id) => {
+    setReviewQueue((prev) => prev.filter((item) => item.id !== id));
+  };
 
   return (
     <div>
@@ -55,10 +66,10 @@ export default function AIReviewPage() {
                 </div>
               </div>
               <div className="flex shrink-0 gap-2">
-                <Button variant="secondary" size="sm" icon={X}>
+                <Button variant="secondary" size="sm" icon={X} onClick={() => handleDismiss(item.id)}>
                   Dismiss
                 </Button>
-                <Button size="sm" icon={Check}>
+                <Button size="sm" icon={Check} onClick={() => handleApprove(item.id)}>
                   Approve
                 </Button>
               </div>
