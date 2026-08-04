@@ -22,19 +22,90 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { Button } from '../../components/ui/Button';
 import { kpiMetrics, forecastSeries, caseloadByDepartment } from '../../data/kpiMetrics';
 import { alerts } from '../../data/alerts';
-import { appointments } from '../../data/appointments';
+import { appointmentsApi } from '../../lib/api/appointments';
 import { formatTime } from '../../lib/utils/formatters';
 
 const SEVERITY_VARIANT = { critical: 'rose', watch: 'amber', info: 'blue' };
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const navigate = useNavigate();
 
+  const fetchDashboardStats = async () => {
+    try {
+      const stats = await appointmentsApi.getDashboardStats();
+      setDashboardStats(stats);
+    } catch (err) {
+      console.error('Failed to fetch dashboard stats:', err);
+    }
+  };
+
+  const fetchUpcomingAppointments = async () => {
+    try {
+      const result = await appointmentsApi.list({ 
+        status: 'Scheduled', 
+        limit: 5,
+        sortBy: 'appointmentDate',
+        sortOrder: 'asc'
+      });
+      setUpcomingAppointments(result.data);
+    } catch (err) {
+      console.error('Failed to fetch upcoming appointments:', err);
+    }
+  };
+
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 700);
-    return () => clearTimeout(t);
+    const loadData = async () => {
+      await Promise.all([fetchDashboardStats(), fetchUpcomingAppointments()]);
+      setIsLoading(false);
+    };
+    loadData();
   }, []);
+
+  const updatedKpiMetrics = dashboardStats ? [
+    {
+      id: 'kpi-today-appointments',
+      label: "Today's Appointments",
+      value: dashboardStats.todayAppointments,
+      unit: '',
+      delta: 0,
+      deltaDirection: 'up',
+      trend: kpiMetrics[0].trend,
+      tone: 'brand',
+    },
+    {
+      id: 'kpi-upcoming',
+      label: 'Upcoming Appointments',
+      value: dashboardStats.upcomingAppointments,
+      unit: '',
+      delta: 0,
+      deltaDirection: 'up',
+      trend: kpiMetrics[1].trend,
+      tone: 'success',
+    },
+    {
+      id: 'kpi-completed',
+      label: 'Completed Appointments',
+      value: dashboardStats.completedAppointments,
+      unit: '',
+      delta: 0,
+      deltaDirection: 'up',
+      trend: kpiMetrics[2].trend,
+      tone: 'amber',
+    },
+    {
+      id: 'kpi-predicted-bottlenecks',
+      label: 'Predicted Bottlenecks (24h)',
+      value: 3,
+      unit: '',
+      delta: 1,
+      deltaDirection: 'up',
+      trend: kpiMetrics[3].trend,
+      tone: 'rose',
+    },
+  ] : kpiMetrics;
 
   return (
     <div>
@@ -53,7 +124,7 @@ export default function DashboardPage() {
         <LoadingSkeleton variant="kpi" />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {kpiMetrics.map((kpi) => (
+          {updatedKpiMetrics.map((kpi) => (
             <KpiCard key={kpi.id} {...kpi} />
           ))}
         </div>
@@ -187,19 +258,23 @@ export default function DashboardPage() {
             <div className="p-5">
               <LoadingSkeleton variant="list" rows={4} />
             </div>
+          ) : upcomingAppointments.length === 0 ? (
+            <div className="p-5">
+              <EmptyState title="No upcoming appointments" description="There are no scheduled appointments at this time." />
+            </div>
           ) : (
             <ul className="divide-y divide-border">
-              {appointments.slice(0, 5).map((apt) => (
-                <li key={apt.id} className="flex items-center justify-between gap-3 p-4">
+              {upcomingAppointments.slice(0, 5).map((apt) => (
+                <li key={apt._id} className="flex items-center justify-between gap-3 p-4">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink">
-                      {apt.animalName} <span className="font-normal text-ink-faint">— {apt.type}</span>
+                      {apt.petName} <span className="font-normal text-ink-faint">— {apt.visitType}</span>
                     </p>
                     <p className="mt-0.5 text-xs text-ink-faint">
-                      {apt.vetName} · {apt.room} · {formatTime(apt.scheduledAt)}
+                      {apt.veterinarian?.fullName || 'Unassigned'} · {apt.room || 'TBD'} · {formatTime(apt.appointmentTime)}
                     </p>
                   </div>
-                  <StatusBadge status={apt.status} />
+                  <StatusBadge status={apt.status.toLowerCase().replace(' ', '-')} />
                 </li>
               ))}
             </ul>
