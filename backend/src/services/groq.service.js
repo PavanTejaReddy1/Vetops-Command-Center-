@@ -9,9 +9,19 @@
 
 import Groq from 'groq-sdk';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+let groq = null;
+
+function getGroqClient() {
+  if (!groq) {
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error('GROQ_API_KEY environment variable is not set. AI features will not work.');
+    }
+    groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
+    });
+  }
+  return groq;
+}
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
@@ -28,8 +38,9 @@ export async function generateBottleneckPrediction(operationalData) {
   
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
+      const client = getGroqClient();
       const prompt = operationalData.prompt || buildBottleneckPrompt(operationalData);
-      const response = await groq.chat.completions.create({
+      const response = await client.chat.completions.create({
         model: 'llama3-70b-8192',
         messages: [
           {
@@ -67,8 +78,9 @@ export async function generateAIReviewRecommendations(reviewData) {
   
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
+      const client = getGroqClient();
       const prompt = buildReviewPrompt(reviewData);
-      const response = await groq.chat.completions.create({
+      const response = await client.chat.completions.create({
         model: 'llama3-70b-8192',
         messages: [
           {
@@ -106,8 +118,9 @@ export async function generateReportSummary(reportData) {
   
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
+      const client = getGroqClient();
       const prompt = buildReportPrompt(reportData);
-      const response = await groq.chat.completions.create({
+      const response = await client.chat.completions.create({
         model: 'llama3-70b-8192',
         messages: [
           {

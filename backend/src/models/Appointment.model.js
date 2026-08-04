@@ -88,7 +88,6 @@ const appointmentSchema = new mongoose.Schema(
   }
 );
 
-appointmentSchema.index({ appointmentId: 1 });
 appointmentSchema.index({ petName: 'text', ownerName: 'text', appointmentId: 'text' });
 appointmentSchema.index({ veterinarian: 1 });
 appointmentSchema.index({ appointmentDate: 1 });

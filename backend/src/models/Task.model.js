@@ -65,7 +65,6 @@ const taskSchema = new mongoose.Schema(
   }
 );
 
-taskSchema.index({ taskId: 1 });
 taskSchema.index({ title: 'text', taskId: 'text' });
 taskSchema.index({ assignedTo: 1 });
 taskSchema.index({ priority: 1 });

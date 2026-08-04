@@ -32,7 +32,6 @@ const settingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-settingSchema.index({ key: 1 });
 settingSchema.index({ category: 1 });
 
 export const Setting = mongoose.model('Setting', settingSchema);

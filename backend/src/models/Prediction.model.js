@@ -99,7 +99,6 @@ const predictionSchema = new mongoose.Schema(
   }
 );
 
-predictionSchema.index({ predictionId: 1 });
 predictionSchema.index({ animalName: 'text', predictionId: 'text' });
 predictionSchema.index({ species: 1 });
 predictionSchema.index({ riskLevel: 1 });

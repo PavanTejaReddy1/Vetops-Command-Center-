@@ -52,7 +52,6 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-notificationSchema.index({ notificationId: 1 });
 notificationSchema.index({ recipient: 1, read: 1, createdAt: -1 });
 notificationSchema.index({ module: 1, createdAt: -1 });
 notificationSchema.index({ isDeleted: 1 });
