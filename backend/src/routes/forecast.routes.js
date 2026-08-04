@@ -7,10 +7,12 @@ import { requireAuth } from '../middleware/requireAuth.js';
  */
 const router = Router();
 
-router.get('/', requireAuth, forecastController.list);
-router.get('/:id', requireAuth, forecastController.getById);
-router.post('/', requireAuth, forecastController.create);
-router.put('/:id', requireAuth, forecastController.update);
-router.delete('/:id', requireAuth, forecastController.remove);
+router.get('/summary', requireAuth, forecastController.getForecastSummary);
+router.get('/appointment-trends', requireAuth, forecastController.getAppointmentTrends);
+router.get('/veterinarian-workload', requireAuth, forecastController.getVeterinarianWorkload);
+router.get('/prediction-trends', requireAuth, forecastController.getPredictionTrends);
+router.get('/risk-distribution', requireAuth, forecastController.getRiskDistribution);
+router.get('/task-trends', requireAuth, forecastController.getTaskTrends);
+router.get('/performance-metrics', requireAuth, forecastController.getPerformanceMetrics);
 
 export default router;
