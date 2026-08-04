@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Bell,
   ChevronDown,
@@ -31,11 +31,44 @@ export function Topbar({ onOpenMobileSidebar }) {
   const [search, setSearch] = useState('');
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const notifPanel = useDisclosure();
   const profilePanel = useDisclosure();
   const quickActions = useDisclosure();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const handleQuickAction = (action) => {
+    quickActions.close();
+    switch (action) {
+      case 'New Appointment':
+        navigate('/workflow-queue');
+        break;
+      case 'New Task':
+        navigate('/task-assignment');
+        break;
+      case 'Invite User':
+        navigate('/users');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleSearch = (value) => {
+    setSearch(value);
+    if (value.length > 2) {
+      // Navigate to predictions page with search query (as a placeholder for search functionality)
+      navigate('/predictions');
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (search.trim()) {
+      navigate('/predictions');
+    }
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -98,12 +131,13 @@ export function Topbar({ onOpenMobileSidebar }) {
       </div>
 
       <div className="ml-auto flex flex-1 items-center justify-end gap-2 sm:gap-3">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Search patients, owners, tasks…"
-          className="hidden w-full max-w-xs sm:block"
-        />
+        <form onSubmit={handleSearchSubmit} className="hidden w-full max-w-xs sm:block">
+          <SearchBar
+            value={search}
+            onChange={handleSearch}
+            placeholder="Search patients, owners, tasks…"
+          />
+        </form>
 
         <span className="hidden whitespace-nowrap font-mono text-xs text-ink-faint lg:inline">{today}</span>
 
@@ -119,7 +153,7 @@ export function Topbar({ onOpenMobileSidebar }) {
                 {QUICK_ACTIONS.map((action) => (
                   <button
                     key={action.label}
-                    onClick={quickActions.close}
+                    onClick={() => handleQuickAction(action.label)}
                     className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-ink hover:bg-canvas"
                   >
                     <action.icon className="h-4 w-4 text-ink-faint" />
