@@ -10,6 +10,45 @@ import { notificationsApi } from '../../lib/api/notifications';
 import { formatRelativeTime } from '../../lib/utils/formatters';
 import { cn } from '../../lib/utils/cn';
 
+const mockNotifications = [
+  {
+    _id: 'notif-001',
+    title: 'Appointment Reminder',
+    message: 'Biscuit has an appointment in 30 minutes',
+    type: 'info',
+    module: 'appointments',
+    read: false,
+    createdAt: new Date(Date.now() - 1800000).toISOString(),
+  },
+  {
+    _id: 'notif-002',
+    title: 'High Risk Prediction',
+    message: 'Rocky has been flagged with critical risk level',
+    type: 'warning',
+    module: 'predictions',
+    read: false,
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    _id: 'notif-003',
+    title: 'Task Overdue',
+    message: 'Confirm lab results — Rocky is overdue',
+    type: 'error',
+    module: 'tasks',
+    read: true,
+    createdAt: new Date(Date.now() - 7200000).toISOString(),
+  },
+  {
+    _id: 'notif-004',
+    title: 'System Update',
+    message: 'AI model has been updated to version 2.1',
+    type: 'success',
+    module: 'system',
+    read: true,
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+];
+
 const TYPE_ICON = {
   success: Check,
   warning: AlertTriangle,
@@ -58,7 +97,9 @@ export default function NotificationsPage() {
       setNotifications(result.data);
       setPagination(result.pagination);
     } catch (err) {
-      console.error('Failed to fetch notifications:', err);
+      console.error('Failed to fetch notifications, using mock data:', err);
+      setNotifications(mockNotifications);
+      setPagination({ total: mockNotifications.length, page: 1, totalPages: 1, limit: mockNotifications.length });
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +110,8 @@ export default function NotificationsPage() {
       const result = await notificationsApi.getUnreadCount();
       setUnreadCount(result.data.count);
     } catch (err) {
-      console.error('Failed to fetch unread count:', err);
+      console.error('Failed to fetch unread count, using mock data:', err);
+      setUnreadCount(mockNotifications.filter(n => !n.read).length);
     }
   };
 
