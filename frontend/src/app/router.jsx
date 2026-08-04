@@ -1,9 +1,11 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
+import { useAuth } from '../app/providers/AuthProvider';
 
 // Route-level code splitting — each module page loads on demand.
+const LoginPage = lazy(() => import('../pages/Login/LoginPage'));
 const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage'));
 const WorkflowQueuePage = lazy(() => import('../pages/WorkflowQueue/WorkflowQueuePage'));
 const ForecastCapacityPage = lazy(() => import('../pages/ForecastCapacity/ForecastCapacityPage'));
@@ -34,10 +36,32 @@ function PageFallback() {
   );
 }
 
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <PageFallback />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
 export const router = createBrowserRouter([
   {
+    path: '/login',
+    element: withSuspense(LoginPage),
+  },
+  {
     path: '/',
-    element: <DashboardLayout />,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: withSuspense(DashboardPage) },
       { path: 'workflow-queue', element: withSuspense(WorkflowQueuePage) },

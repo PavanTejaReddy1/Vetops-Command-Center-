@@ -22,3 +22,7 @@ export function validateEnv(requiredVars = []) {
 export function validateDatabaseEnv() {
   validateEnv(['MONGODB_URI']);
 }
+
+export function validateAuthEnv() {
+  validateEnv(['JWT_SECRET']);
+}

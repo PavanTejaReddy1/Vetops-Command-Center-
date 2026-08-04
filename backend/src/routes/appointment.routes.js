@@ -1,15 +1,16 @@
 import { Router } from 'express';
 import { appointmentController } from '../controllers/appointment.controller.js';
+import { requireAuth } from '../middleware/requireAuth.js';
 
 /**
  * Workflow Queue / Appointments routes — mounted at /api/v1/appointments
  */
 const router = Router();
 
-router.get('/', appointmentController.list);
-router.get('/:id', appointmentController.getById);
-router.post('/', appointmentController.create);
-router.put('/:id', appointmentController.update);
-router.delete('/:id', appointmentController.remove);
+router.get('/', requireAuth, appointmentController.list);
+router.get('/:id', requireAuth, appointmentController.getById);
+router.post('/', requireAuth, appointmentController.create);
+router.put('/:id', requireAuth, appointmentController.update);
+router.delete('/:id', requireAuth, appointmentController.remove);
 
 export default router;

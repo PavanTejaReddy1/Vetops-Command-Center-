@@ -1,15 +1,16 @@
 import { Router } from 'express';
 import { auditLogController } from '../controllers/auditLog.controller.js';
+import { requireAuth } from '../middleware/requireAuth.js';
 
 /**
  * Audit Logs routes — mounted at /api/v1/audit-logs
  */
 const router = Router();
 
-router.get('/', auditLogController.list);
-router.get('/:id', auditLogController.getById);
-router.post('/', auditLogController.create);
-router.put('/:id', auditLogController.update);
-router.delete('/:id', auditLogController.remove);
+router.get('/', requireAuth, auditLogController.list);
+router.get('/:id', requireAuth, auditLogController.getById);
+router.post('/', requireAuth, auditLogController.create);
+router.put('/:id', requireAuth, auditLogController.update);
+router.delete('/:id', requireAuth, auditLogController.remove);
 
 export default router;

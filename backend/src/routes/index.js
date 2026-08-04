@@ -1,5 +1,6 @@
 import { Router } from 'express';
 
+import authRoutes from './auth.routes.js';
 import veterinarianRoutes from './veterinarian.routes.js';
 import appointmentRoutes from './appointment.routes.js';
 import forecastRoutes from './forecast.routes.js';
@@ -19,6 +20,7 @@ import settingRoutes from './setting.routes.js';
  */
 export const apiRouter = Router();
 
+apiRouter.use('/auth', authRoutes);
 apiRouter.use('/veterinarians', veterinarianRoutes);
 apiRouter.use('/appointments', appointmentRoutes);
 apiRouter.use('/forecasts', forecastRoutes);

@@ -1,4 +1,5 @@
 import { ThemeProvider } from './ThemeProvider';
+import { AuthProvider } from './AuthProvider';
 
 /**
  * Single composition point for every app-wide provider (theme now;
@@ -6,5 +7,9 @@ import { ThemeProvider } from './ThemeProvider';
  * providers here rather than in main.jsx so App stays a plain import.
  */
 export function AppProviders({ children }) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <AuthProvider>
+      <ThemeProvider>{children}</ThemeProvider>
+    </AuthProvider>
+  );
 }
