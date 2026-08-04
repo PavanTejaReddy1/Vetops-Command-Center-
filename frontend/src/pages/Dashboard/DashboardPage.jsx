@@ -23,6 +23,7 @@ import { Button } from '../../components/ui/Button';
 import { kpiMetrics, forecastSeries, caseloadByDepartment } from '../../data/kpiMetrics';
 import { alerts } from '../../data/alerts';
 import { appointmentsApi } from '../../lib/api/appointments';
+import { tasksApi } from '../../lib/api/tasks';
 import { formatTime } from '../../lib/utils/formatters';
 
 const SEVERITY_VARIANT = { critical: 'rose', watch: 'amber', info: 'blue' };
@@ -30,7 +31,9 @@ const SEVERITY_VARIANT = { critical: 'rose', watch: 'amber', info: 'blue' };
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardStats, setDashboardStats] = useState(null);
+  const [taskStats, setTaskStats] = useState(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [recentTasks, setRecentTasks] = useState([]);
   const navigate = useNavigate();
 
   const fetchDashboardStats = async () => {
@@ -39,6 +42,16 @@ export default function DashboardPage() {
       setDashboardStats(stats);
     } catch (err) {
       console.error('Failed to fetch dashboard stats:', err);
+    }
+  };
+
+  const fetchTaskStats = async () => {
+    try {
+      const stats = await tasksApi.getDashboardStats();
+      setTaskStats(stats);
+      setRecentTasks(stats.recentTasks || []);
+    } catch (err) {
+      console.error('Failed to fetch task stats:', err);
     }
   };
 
@@ -58,13 +71,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([fetchDashboardStats(), fetchUpcomingAppointments()]);
+      await Promise.all([fetchDashboardStats(), fetchTaskStats(), fetchUpcomingAppointments()]);
       setIsLoading(false);
     };
     loadData();
   }, []);
 
-  const updatedKpiMetrics = dashboardStats ? [
+  const updatedKpiMetrics = dashboardStats && taskStats ? [
     {
       id: 'kpi-today-appointments',
       label: "Today's Appointments",
@@ -76,9 +89,9 @@ export default function DashboardPage() {
       tone: 'brand',
     },
     {
-      id: 'kpi-upcoming',
-      label: 'Upcoming Appointments',
-      value: dashboardStats.upcomingAppointments,
+      id: 'kpi-pending-tasks',
+      label: 'Pending Tasks',
+      value: taskStats.pendingTasks,
       unit: '',
       delta: 0,
       deltaDirection: 'up',
@@ -86,14 +99,14 @@ export default function DashboardPage() {
       tone: 'success',
     },
     {
-      id: 'kpi-completed',
-      label: 'Completed Appointments',
-      value: dashboardStats.completedAppointments,
+      id: 'kpi-overdue-tasks',
+      label: 'Overdue Tasks',
+      value: taskStats.overdueTasks,
       unit: '',
       delta: 0,
-      deltaDirection: 'up',
+      deltaDirection: 'down',
       trend: kpiMetrics[2].trend,
-      tone: 'amber',
+      tone: 'rose',
     },
     {
       id: 'kpi-predicted-bottlenecks',
@@ -103,7 +116,7 @@ export default function DashboardPage() {
       delta: 1,
       deltaDirection: 'up',
       trend: kpiMetrics[3].trend,
-      tone: 'rose',
+      tone: 'amber',
     },
   ] : kpiMetrics;
 
@@ -275,6 +288,46 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <StatusBadge status={apt.status.toLowerCase().replace(' ', '-')} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+
+      <div className="mt-4">
+        {/* Recent tasks */}
+        <Card padded={false}>
+          <div className="flex items-center justify-between border-b border-border p-5">
+            <div>
+              <CardTitle>Recent Tasks</CardTitle>
+              <CardDescription>Latest task assignments</CardDescription>
+            </div>
+            <Link to="/task-assignment" className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          {isLoading ? (
+            <div className="p-5">
+              <LoadingSkeleton variant="list" rows={4} />
+            </div>
+          ) : recentTasks.length === 0 ? (
+            <div className="p-5">
+              <EmptyState title="No recent tasks" description="There are no recent task assignments." />
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {recentTasks.slice(0, 5).map((task) => (
+                <li key={task._id} className="flex items-center justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-ink">
+                      {task.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-ink-faint">
+                      {task.assignedTo?.fullName || 'Unassigned'} · {task.category} · {task.status}
+                    </p>
+                  </div>
+                  <StatusBadge status={task.status.toLowerCase().replace(' ', '-')} />
                 </li>
               ))}
             </ul>

@@ -8,9 +8,11 @@ import { requireAuth } from '../middleware/requireAuth.js';
 const router = Router();
 
 router.get('/', requireAuth, taskController.list);
+router.get('/dashboard-stats', requireAuth, taskController.getDashboardStats);
 router.get('/:id', requireAuth, taskController.getById);
 router.post('/', requireAuth, taskController.create);
 router.put('/:id', requireAuth, taskController.update);
+router.patch('/:id/status', requireAuth, taskController.updateStatus);
 router.delete('/:id', requireAuth, taskController.remove);
 
 export default router;

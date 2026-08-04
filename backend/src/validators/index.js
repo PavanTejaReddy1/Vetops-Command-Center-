@@ -66,9 +66,27 @@ export const createAppointmentSchema = z.object({
 
 export const updateAppointmentSchema = createAppointmentSchema.partial();
 
+export const createTaskSchema = z.object({
+  taskId: z.string().min(1, 'Task ID is required'),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  assignedTo: z.string().min(1, 'Assignee is required'),
+  priority: z.enum(['Low', 'Medium', 'High', 'Critical']).optional(),
+  category: z.enum(['Administrative', 'Clinical', 'Maintenance', 'Communication', 'Other']).optional(),
+  dueDate: z.string().optional(),
+  status: z.enum(['Pending', 'In Progress', 'Completed', 'Cancelled']).optional(),
+  createdBy: z.string().optional(),
+  attachments: z.array(z.object({ name: z.string(), url: z.string().url() })).optional(),
+  notes: z.string().optional(),
+});
+
+export const updateTaskSchema = createTaskSchema.partial();
+
 export const validators = {
   createVeterinarian: createVeterinarianSchema,
   updateVeterinarian: updateVeterinarianSchema,
   createAppointment: createAppointmentSchema,
   updateAppointment: updateAppointmentSchema,
+  createTask: createTaskSchema,
+  updateTask: updateTaskSchema,
 };
