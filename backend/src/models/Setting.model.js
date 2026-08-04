@@ -1,21 +1,38 @@
-/**
- * Setting model — PHASE 2 (Mongoose schema not implemented yet).
- *
- * Structure placeholder so the shape of the future schema is discoverable
- * from the codebase. Fields below are illustrative only, based on the
- * dummy data used by the frontend (src/data/setting.js).
- *
- * Example (for Phase 2 reference):
- *
- * import mongoose from 'mongoose';
- *
- * const settingSchema = new mongoose.Schema(
- *   {
- *     // ...fields specific to Settings
- *   },
- *   { timestamps: true }
- * );
- *
- * export const Setting = mongoose.model('Setting', settingSchema);
- */
-export const SettingModel = null; // placeholder export until Phase 2
+import mongoose from 'mongoose';
+
+const settingSchema = new mongoose.Schema(
+  {
+    key: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    category: {
+      type: String,
+      required: true,
+      enum: ['organization', 'appearance', 'notifications', 'security', 'ai', 'system'],
+    },
+    value: {
+      type: mongoose.Schema.Types.Mixed,
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ['string', 'number', 'boolean', 'object', 'array'],
+      default: 'string',
+    },
+    description: {
+      type: String,
+    },
+    isPublic: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { timestamps: true }
+);
+
+settingSchema.index({ key: 1 });
+settingSchema.index({ category: 1 });
+
+export const Setting = mongoose.model('Setting', settingSchema);

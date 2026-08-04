@@ -7,10 +7,10 @@ import { requireAuth } from '../middleware/requireAuth.js';
  */
 const router = Router();
 
-router.get('/', requireAuth, settingController.list);
-router.get('/:id', requireAuth, settingController.getById);
-router.post('/', requireAuth, settingController.create);
-router.put('/:id', requireAuth, settingController.update);
-router.delete('/:id', requireAuth, settingController.remove);
+router.get('/', requireAuth, settingController.getAll);
+router.get('/:category', requireAuth, settingController.getByCategory);
+router.put('/:key', requireAuth, settingController.update);
+router.put('/category/:category', requireAuth, settingController.updateCategory);
+router.post('/:category/reset', requireAuth, settingController.reset);
 
 export default router;
