@@ -1,4 +1,4 @@
-# VetOps Command Center — Phase 1
+# VetOps Command Center
 
 An AI-powered Veterinary Care Predictive Operations Command Center. Phase 1 delivers
 the **frontend foundation and project architecture only** — no business logic, no live
