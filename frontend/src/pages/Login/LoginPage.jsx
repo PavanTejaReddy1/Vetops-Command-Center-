@@ -93,9 +93,9 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              fullWidth
-              isLoading={isSubmitting}
+              loading={isSubmitting}
               disabled={isSubmitting}
+              className="w-full"
             >
               {isSubmitting ? 'Signing in...' : 'Sign In'}
             </Button>
