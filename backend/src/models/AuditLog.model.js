@@ -1,21 +1,49 @@
-/**
- * AuditLog model — PHASE 2 (Mongoose schema not implemented yet).
- *
- * Structure placeholder so the shape of the future schema is discoverable
- * from the codebase. Fields below are illustrative only, based on the
- * dummy data used by the frontend (src/data/auditLog.js).
- *
- * Example (for Phase 2 reference):
- *
- * import mongoose from 'mongoose';
- *
- * const auditLogSchema = new mongoose.Schema(
- *   {
- *     // ...fields specific to Audit Logs
- *   },
- *   { timestamps: true }
- * );
- *
- * export const AuditLog = mongoose.model('AuditLog', auditLogSchema);
- */
-export const AuditLogModel = null; // placeholder export until Phase 2
+import mongoose from 'mongoose';
+
+const auditLogSchema = new mongoose.Schema(
+  {
+    auditId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    action: {
+      type: String,
+      required: true,
+    },
+    module: {
+      type: String,
+      required: true,
+      enum: ['auth', 'users', 'veterinarians', 'appointments', 'tasks', 'predictions', 'forecasts', 'reports', 'settings', 'system'],
+    },
+    resourceId: {
+      type: String,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    ipAddress: {
+      type: String,
+    },
+    userAgent: {
+      type: String,
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+  },
+  { timestamps: true }
+);
+
+auditLogSchema.index({ auditId: 1 });
+auditLogSchema.index({ user: 1, createdAt: -1 });
+auditLogSchema.index({ module: 1, createdAt: -1 });
+auditLogSchema.index({ action: 1 });
+auditLogSchema.index({ createdAt: -1 });
+
+export const AuditLog = mongoose.model('AuditLog', auditLogSchema);

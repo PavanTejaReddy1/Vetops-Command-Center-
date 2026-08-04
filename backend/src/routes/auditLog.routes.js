@@ -10,7 +10,6 @@ const router = Router();
 router.get('/', requireAuth, auditLogController.list);
 router.get('/:id', requireAuth, auditLogController.getById);
 router.post('/', requireAuth, auditLogController.create);
-router.put('/:id', requireAuth, auditLogController.update);
-router.delete('/:id', requireAuth, auditLogController.remove);
+router.get('/export/:format', requireAuth, auditLogController.export);
 
 export default router;

@@ -3,6 +3,7 @@ import cors from 'cors';
 import { apiRouter } from './routes/index.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { auditLogger } from './middleware/auditLogger.js';
 import { getDatabaseStatus } from './config/database.js';
 
 /**
@@ -31,7 +32,7 @@ export function createApp() {
     });
   });
 
-  app.use('/api/v1', apiRouter);
+  app.use('/api/v1', auditLogger, apiRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
