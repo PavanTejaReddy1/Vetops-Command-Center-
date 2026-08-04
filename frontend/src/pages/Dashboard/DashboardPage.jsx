@@ -25,6 +25,8 @@ import { alerts } from '../../data/alerts';
 import { appointmentsApi } from '../../lib/api/appointments';
 import { tasksApi } from '../../lib/api/tasks';
 import { predictionsApi } from '../../lib/api/predictions';
+import { forecastsApi } from '../../lib/api/forecasts';
+import { reportsApi } from '../../lib/api/reports';
 import { formatTime } from '../../lib/utils/formatters';
 
 const SEVERITY_VARIANT = { critical: 'rose', watch: 'amber', info: 'blue' };
@@ -34,6 +36,8 @@ export default function DashboardPage() {
   const [dashboardStats, setDashboardStats] = useState(null);
   const [taskStats, setTaskStats] = useState(null);
   const [predictionStats, setPredictionStats] = useState(null);
+  const [forecastSummary, setForecastSummary] = useState(null);
+  const [reportAnalytics, setReportAnalytics] = useState(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [recentTasks, setRecentTasks] = useState([]);
   const [recentPredictions, setRecentPredictions] = useState([]);
@@ -68,6 +72,24 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchForecastSummary = async () => {
+    try {
+      const stats = await forecastsApi.getForecastSummary();
+      setForecastSummary(stats.data);
+    } catch (err) {
+      console.error('Failed to fetch forecast summary:', err);
+    }
+  };
+
+  const fetchReportAnalytics = async () => {
+    try {
+      const stats = await reportsApi.getAnalyticsSummary({ period: 'daily' });
+      setReportAnalytics(stats.data);
+    } catch (err) {
+      console.error('Failed to fetch report analytics:', err);
+    }
+  };
+
   const fetchUpcomingAppointments = async () => {
     try {
       const result = await appointmentsApi.list({ 
@@ -84,7 +106,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([fetchDashboardStats(), fetchTaskStats(), fetchPredictionStats(), fetchUpcomingAppointments()]);
+      await Promise.all([fetchDashboardStats(), fetchTaskStats(), fetchPredictionStats(), fetchForecastSummary(), fetchReportAnalytics(), fetchUpcomingAppointments()]);
       setIsLoading(false);
     };
     loadData();
@@ -157,6 +179,44 @@ export default function DashboardPage() {
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        {/* Forecast Summary */}
+        <Card padded>
+          <div>
+            <p className="text-sm text-ink-muted">Forecast Summary</p>
+            <p className="mt-1 text-2xl font-semibold text-ink">{forecastSummary?.appointments?.total || 0}</p>
+            <p className="mt-1 text-xs text-ink-faint">Total appointments this period</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-xs text-ink-muted">Completion Rate</p>
+                <p className="text-sm font-medium text-ink">{forecastSummary?.appointments?.completionRate || 0}%</p>
+              </div>
+              <div>
+                <p className="text-xs text-ink-muted">High Risk Predictions</p>
+                <p className="text-sm font-medium text-ink">{forecastSummary?.predictions?.highRiskRate || 0}%</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Report Analytics */}
+        <Card padded>
+          <div>
+            <p className="text-sm text-ink-muted">Report Analytics (Daily)</p>
+            <p className="mt-1 text-2xl font-semibold text-ink">{reportAnalytics?.appointments?.total || 0}</p>
+            <p className="mt-1 text-xs text-ink-faint">Appointments today</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-xs text-ink-muted">Predictions</p>
+                <p className="text-sm font-medium text-ink">{reportAnalytics?.predictions?.total || 0}</p>
+              </div>
+              <div>
+                <p className="text-xs text-ink-muted">Tasks Completed</p>
+                <p className="text-sm font-medium text-ink">{reportAnalytics?.tasks?.completed || 0}</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         {/* Forecast chart */}
         <Card className="xl:col-span-2" padded={false}>
           <div className="p-5 pb-0">
@@ -200,7 +260,9 @@ export default function DashboardPage() {
             </div>
           )}
         </Card>
+      </div>
 
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
         {/* Predictive alerts */}
         <Card padded={false}>
           <div className="flex items-center justify-between border-b border-border p-5">
@@ -231,41 +293,6 @@ export default function DashboardPage() {
                 </li>
               ))}
             </ul>
-          )}
-        </Card>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
-        {/* Caseload by department */}
-        <Card padded={false}>
-          <div className="p-5 pb-0">
-            <CardTitle>Caseload by Department</CardTitle>
-            <CardDescription>Currently open cases</CardDescription>
-          </div>
-          {isLoading ? (
-            <div className="p-5">
-              <LoadingSkeleton variant="card" />
-            </div>
-          ) : (
-            <div className="h-56 px-2 pb-4 pt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={caseloadByDepartment} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgb(var(--color-border))" />
-                  <XAxis dataKey="department" tick={{ fontSize: 11, fill: 'rgb(var(--color-ink-faint))' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 12, fill: 'rgb(var(--color-ink-faint))' }} axisLine={false} tickLine={false} width={28} />
-                  <Tooltip
-                    cursor={{ fill: 'rgb(var(--color-border))', opacity: 0.4 }}
-                    contentStyle={{
-                      borderRadius: 8,
-                      border: '1px solid rgb(var(--color-border))',
-                      background: 'rgb(var(--color-surface-raised))',
-                      fontSize: 12,
-                    }}
-                  />
-                  <Bar dataKey="cases" fill="#0D7C73" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
           )}
         </Card>
 

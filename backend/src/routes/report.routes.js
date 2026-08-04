@@ -7,10 +7,12 @@ import { requireAuth } from '../middleware/requireAuth.js';
  */
 const router = Router();
 
-router.get('/', requireAuth, reportController.list);
-router.get('/:id', requireAuth, reportController.getById);
-router.post('/', requireAuth, reportController.create);
-router.put('/:id', requireAuth, reportController.update);
-router.delete('/:id', requireAuth, reportController.remove);
+router.get('/appointments', requireAuth, reportController.getAppointmentReport);
+router.get('/veterinarians', requireAuth, reportController.getVeterinarianPerformanceReport);
+router.get('/predictions', requireAuth, reportController.getPredictionReport);
+router.get('/tasks', requireAuth, reportController.getTaskReport);
+router.get('/system', requireAuth, reportController.getSystemActivityReport);
+router.get('/analytics/summary', requireAuth, reportController.getAnalyticsSummary);
+router.get('/export/:type/:format', requireAuth, reportController.exportReport);
 
 export default router;
