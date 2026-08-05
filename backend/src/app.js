@@ -89,4 +89,5 @@ export function createApp() {
 }
 
 // Export app instance for Vercel
-export default createApp();
+const app = createApp();
+export default app;
