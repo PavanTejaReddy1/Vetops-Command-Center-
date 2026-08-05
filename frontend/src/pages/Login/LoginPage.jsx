@@ -52,7 +52,7 @@ export default function LoginPage() {
         <Card>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <Alert variant="error" message={error} />
+              <Alert variant="error" title={error} />
             )}
 
             <div>
