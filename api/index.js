@@ -1,5 +1,8 @@
 import { createApp } from '../backend/src/app.js';
+import serverless from 'serverless-http';
 
-// Create and export the Express app for Vercel
+// Create the Express app
 const app = createApp();
-export default app;
+
+// Export for Vercel serverless function
+export default serverless(app);
