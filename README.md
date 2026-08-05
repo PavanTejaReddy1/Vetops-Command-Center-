@@ -367,10 +367,6 @@ The project includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that
 - [ ] Add data visualization with more chart types
 - [ ] Implement role-based access control (RBAC)
 
-## Screenshots
-
-*Placeholder for application screenshots*
-
 ## Troubleshooting
 
 ### MongoDB Connection Issues
