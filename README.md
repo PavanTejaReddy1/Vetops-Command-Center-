@@ -171,6 +171,15 @@ cd backend
 npm start
 ```
 
+## Login Credentials
+
+After seeding the database, you can log in with the following credentials:
+
+- **Email**: admin@vetops.com
+- **Password**: admin123
+
+**Security Note**: Please change the default password after your first login for security reasons.
+
 ## Seeding Database
 
 Create an admin user:
