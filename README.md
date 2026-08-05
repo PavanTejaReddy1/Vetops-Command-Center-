@@ -193,8 +193,6 @@ This will create an admin user with:
 - Password: admin123
 - Role: admin
 
-**Important:** Change the default password after first login.
-
 ## AI Configuration
 
 To enable AI predictions, you need a Groq API key:
