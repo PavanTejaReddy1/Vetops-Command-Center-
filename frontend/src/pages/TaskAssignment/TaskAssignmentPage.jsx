@@ -240,26 +240,7 @@ export default function TaskAssignmentPage() {
       setTasks(result.data);
       setPagination(result.pagination);
     } catch (err) {
-      console.error('Failed to fetch tasks, using mock data:', err);
-      // Use mock data as fallback
-      const mockTasks = tasks.map(task => ({
-        _id: task.id,
-        taskId: task.id,
-        title: task.title,
-        description: '',
-        assignedTo: { _id: task.id, fullName: task.assignee },
-        priority: task.priority === 'urgent' ? 'High' : 
-                 task.priority === 'high' ? 'High' : 
-                 task.priority.charAt(0).toUpperCase() + task.priority.slice(1),
-        category: 'Other',
-        dueDate: task.dueAt,
-        status: task.status === 'in-progress' ? 'In Progress' : 
-                 task.status === 'open' ? 'Pending' : 
-                 task.status.charAt(0).toUpperCase() + task.status.slice(1),
-        notes: '',
-      }));
-      setTasks(mockTasks);
-      setPagination({ total: mockTasks.length, page: 1, totalPages: 1, limit: mockTasks.length });
+      setError(err.message || 'Failed to fetch tasks');
     } finally {
       setIsLoading(false);
     }

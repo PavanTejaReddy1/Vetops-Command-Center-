@@ -48,13 +48,7 @@ export default function DashboardPage() {
       const stats = await appointmentsApi.getDashboardStats();
       setDashboardStats(stats);
     } catch (err) {
-      console.error('Failed to fetch dashboard stats, using mock data:', err);
-      setDashboardStats({
-        todayAppointments: 8,
-        totalAppointments: 156,
-        completedAppointments: 142,
-        cancelledAppointments: 8,
-      });
+      console.error('Failed to fetch dashboard stats:', err);
     }
   };
 
@@ -64,21 +58,7 @@ export default function DashboardPage() {
       setTaskStats(stats);
       setRecentTasks(stats.recentTasks || []);
     } catch (err) {
-      console.error('Failed to fetch task stats, using mock data:', err);
-      const mockTaskStats = {
-        pendingTasks: 4,
-        overdueTasks: 2,
-        completedTasks: 76,
-        totalTasks: 89,
-        recentTasks: [
-          { _id: 'tsk-201', title: 'Restock Exam Room 2 supplies', assignedTo: { fullName: 'Jordan Blake' }, category: 'Maintenance', status: 'Pending' },
-          { _id: 'tsk-202', title: 'Confirm lab results — Rocky', assignedTo: { fullName: 'Dr. Marcus Webb' }, category: 'Clinical', status: 'In Progress' },
-          { _id: 'tsk-203', title: 'Callback: Luna vaccination reminder', assignedTo: { fullName: 'Priya Shah' }, category: 'Communication', status: 'Pending' },
-          { _id: 'tsk-204', title: 'Sterilize surgical tray — Bay 1', assignedTo: { fullName: 'Chris Nolan' }, category: 'Maintenance', status: 'Pending' },
-        ],
-      };
-      setTaskStats(mockTaskStats);
-      setRecentTasks(mockTaskStats.recentTasks);
+      console.error('Failed to fetch task stats:', err);
     }
   };
 
@@ -88,20 +68,7 @@ export default function DashboardPage() {
       setPredictionStats(stats);
       setRecentPredictions(stats.recentPredictions || []);
     } catch (err) {
-      console.error('Failed to fetch prediction stats, using mock data:', err);
-      const mockPredictionStats = {
-        totalPredictions: 45,
-        highRiskPredictions: 12,
-        mediumRiskPredictions: 20,
-        lowRiskPredictions: 13,
-        recentPredictions: [
-          { _id: 'pred-001', animalName: 'Max', species: 'Dog', breed: 'Golden Retriever', aiResult: { riskLevel: 'High' } },
-          { _id: 'pred-002', animalName: 'Luna', species: 'Cat', breed: 'Persian', aiResult: { riskLevel: 'Medium' } },
-          { _id: 'pred-003', animalName: 'Rocky', species: 'Dog', breed: 'German Shepherd', aiResult: { riskLevel: 'Critical' } },
-        ],
-      };
-      setPredictionStats(mockPredictionStats);
-      setRecentPredictions(mockPredictionStats.recentPredictions);
+      console.error('Failed to fetch prediction stats:', err);
     }
   };
 
@@ -110,11 +77,7 @@ export default function DashboardPage() {
       const stats = await forecastsApi.getForecastSummary();
       setForecastSummary(stats.data);
     } catch (err) {
-      console.error('Failed to fetch forecast summary, using mock data:', err);
-      setForecastSummary({
-        appointments: { total: 156, completionRate: 91 },
-        predictions: { highRiskRate: 27 },
-      });
+      console.error('Failed to fetch forecast summary:', err);
     }
   };
 
@@ -123,12 +86,7 @@ export default function DashboardPage() {
       const stats = await reportsApi.getAnalyticsSummary({ period: 'daily' });
       setReportAnalytics(stats.data);
     } catch (err) {
-      console.error('Failed to fetch report analytics, using mock data:', err);
-      setReportAnalytics({
-        appointments: { total: 24 },
-        predictions: { total: 8 },
-        tasks: { completed: 18 },
-      });
+      console.error('Failed to fetch report analytics:', err);
     }
   };
 
@@ -142,15 +100,7 @@ export default function DashboardPage() {
       });
       setUpcomingAppointments(result.data);
     } catch (err) {
-      console.error('Failed to fetch upcoming appointments, using mock data:', err);
-      const mockAppointments = [
-        { _id: 'apt-1001', petName: 'Biscuit', visitType: 'Wellness Exam', veterinarian: { fullName: 'Dr. Elena Marsh' }, room: 'Exam 2', appointmentTime: '08:30', status: 'Scheduled' },
-        { _id: 'apt-1002', petName: 'Luna', visitType: 'Vaccination', veterinarian: { fullName: 'Dr. Raj Patel' }, room: 'Exam 1', appointmentTime: '09:00', status: 'Scheduled' },
-        { _id: 'apt-1004', petName: 'Shadow', visitType: 'Dermatology Follow-up', veterinarian: { fullName: 'Dr. Naomi Cole' }, room: 'Exam 3', appointmentTime: '09:30', status: 'Scheduled' },
-        { _id: 'apt-1005', petName: 'Pepper', visitType: 'Post-Op Check', veterinarian: { fullName: 'Dr. Owen Fisher' }, room: 'Exam 4', appointmentTime: '10:00', status: 'Scheduled' },
-        { _id: 'apt-1006', petName: 'Max', visitType: 'Cardiac Workup', veterinarian: { fullName: 'Dr. Marcus Webb' }, room: 'Exam 2', appointmentTime: '10:15', status: 'Scheduled' },
-      ];
-      setUpcomingAppointments(mockAppointments);
+      console.error('Failed to fetch upcoming appointments:', err);
     }
   };
 

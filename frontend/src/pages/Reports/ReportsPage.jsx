@@ -8,12 +8,6 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { Badge } from '../../components/ui/Badge';
 import { reportsApi } from '../../lib/api/reports';
 
-const mockAnalytics = {
-  appointments: { total: 156, completed: 142, cancelled: 8, completionRate: 91 },
-  predictions: { total: 45, highRisk: 12, mediumRisk: 20, lowRisk: 13 },
-  tasks: { total: 89, completed: 76, pending: 10, overdue: 3 },
-};
-
 const REPORT_TEMPLATES = [
   { id: 'appointments', name: 'Appointment Report', description: 'Appointment statistics and distribution' },
   { id: 'veterinarians', name: 'Veterinarian Performance', description: 'Staff performance metrics' },
@@ -44,8 +38,7 @@ export default function ReportsPage() {
       const data = await reportsApi.getAnalyticsSummary({ period });
       setAnalytics(data.data);
     } catch (err) {
-      console.error('Failed to fetch analytics, using mock data:', err);
-      setAnalytics(mockAnalytics);
+      setError(err.message || 'Failed to fetch analytics');
     }
   };
 

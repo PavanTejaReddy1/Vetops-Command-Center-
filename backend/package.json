@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "node --watch server.js",
     "start": "node server.js",
-    "seed:admin": "node scripts/seedAdmin.js"
+    "seed:admin": "node scripts/seedAdmin.js",
+    "seed:db": "node scripts/seedDatabase.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
