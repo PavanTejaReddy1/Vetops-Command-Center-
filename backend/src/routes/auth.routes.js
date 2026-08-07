@@ -5,6 +5,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
+router.post('/signup', asyncHandler(authController.signup));
 router.post('/login', asyncHandler(authController.login));
 router.post('/logout', asyncHandler(authController.logout));
 router.get('/profile', requireAuth, asyncHandler(authController.getProfile));

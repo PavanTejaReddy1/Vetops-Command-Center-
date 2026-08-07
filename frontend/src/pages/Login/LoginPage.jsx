@@ -10,15 +10,23 @@ import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, loading, error } = useAuth();
+  const [isSignup, setIsSignup] = useState(false);
+  const { login, signup, loading, error } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const result = await login(email, password);
+    let result;
+    if (isSignup) {
+      result = await signup(email, password, firstName, lastName);
+    } else {
+      result = await login(email, password);
+    }
 
     setIsSubmitting(false);
 
@@ -45,7 +53,7 @@ export default function LoginPage() {
             VetOps Command Center
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Sign in to access your dashboard
+            {isSignup ? 'Create your account' : 'Sign in to access your dashboard'}
           </p>
         </div>
 
@@ -53,6 +61,45 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <Alert variant="error" title={error} />
+            )}
+
+            {isSignup && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="firstName"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    First Name
+                  </label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="John"
+                    required
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="lastName"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    Last Name
+                  </label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Doe"
+                    required
+                    autoComplete="family-name"
+                  />
+                </div>
+              </div>
             )}
 
             <div>
@@ -69,7 +116,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@vetops.com"
                 required
-                autoComplete="email"
+                autoComplete={isSignup ? "email" : "email"}
               />
             </div>
 
@@ -87,8 +134,14 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                autoComplete="current-password"
+                autoComplete={isSignup ? "new-password" : "current-password"}
+                minLength={6}
               />
+              {isSignup && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Must be at least 6 characters
+                </p>
+              )}
             </div>
 
             <Button
@@ -97,13 +150,38 @@ export default function LoginPage() {
               disabled={isSubmitting}
               className="w-full"
             >
-              {isSubmitting ? 'Signing in...' : 'Sign In'}
+              {isSubmitting 
+                ? (isSignup ? 'Creating account...' : 'Signing in...') 
+                : (isSignup ? 'Sign Up' : 'Sign In')
+              }
             </Button>
           </form>
         </Card>
 
         <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-          Contact your administrator if you need access credentials
+          {isSignup ? (
+            <>
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={() => setIsSignup(false)}
+                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              >
+                Sign in
+              </button>
+            </>
+          ) : (
+            <>
+              Don't have an account?{' '}
+              <button
+                type="button"
+                onClick={() => setIsSignup(true)}
+                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              >
+                Sign up
+              </button>
+            </>
+          )}
         </p>
       </div>
     </div>

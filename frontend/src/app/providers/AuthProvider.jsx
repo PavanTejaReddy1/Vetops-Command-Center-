@@ -30,6 +30,20 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const signup = async (email, password, firstName, lastName) => {
+    try {
+      setError(null);
+      const response = await apiClient.post('/auth/signup', { email, password, firstName, lastName });
+      localStorage.setItem('vetops_token', response.data.token);
+      setUser(response.data.user);
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || 'Signup failed';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const login = async (email, password) => {
     try {
       setError(null);
@@ -60,6 +74,7 @@ export function AuthProvider({ children }) {
     loading,
     error,
     login,
+    signup,
     logout,
     isAuthenticated: !!user,
   };
