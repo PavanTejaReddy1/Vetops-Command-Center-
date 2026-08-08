@@ -16,21 +16,18 @@
       }
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/backend/server-vercel.js"
+      "source": "/api/:path*",
+      "destination": "/backend/server-vercel.js"
     },
     {
-      "src": "/health",
-      "dest": "/backend/server-vercel.js"
+      "source": "/health",
+      "destination": "/backend/server-vercel.js"
     },
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ]
 }
