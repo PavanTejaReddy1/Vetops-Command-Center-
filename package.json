@@ -2,13 +2,28 @@
   "name": "vetops-command-center",
   "version": "1.0.0",
   "private": true,
-  "description": "VetOps Command Center monorepo — frontend (React/Vite) + backend (Express/MongoDB)",
-  "scripts": {
-    "install:all": "npm ci --prefix backend && npm ci --prefix frontend",
-    "build": "npm ci --prefix backend && npm ci --prefix frontend && npm run build --prefix frontend",
-    "start": "npm start --prefix backend"
-  },
+  "description": "VetOps Command Center — monorepo root. Dependencies here are for the Vercel serverless API function in /api.",
+  "type": "module",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "cd frontend && npm ci && npm run build",
+    "start": "cd backend && node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.6.1",
+    "groq-sdk": "^1.5.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.5.0",
+    "morgan": "^1.11.0",
+    "serverless-http": "^4.0.0",
+    "zod": "^4.4.3"
   }
 }
