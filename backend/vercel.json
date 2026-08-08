@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "buildCommand": "npm ci",
+  "outputDirectory": ".",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/server-vercel.js"
+    }
+  ]
+}

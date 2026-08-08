@@ -30,27 +30,10 @@ export function createApp() {
   }));
 
   // CORS configuration
-  // In production on Vercel the frontend and API share the same origin, so
-  // we allow everything (same-origin calls don't need CORS), plus any explicit
-  // FRONTEND_URL override for separate frontend deployments.
-  const allowedOrigins = process.env.NODE_ENV === 'production'
-    ? [
-        process.env.FRONTEND_URL,
-        process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
-      ].filter(Boolean)
-    : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'];
-
   const corsOptions = {
-    origin: (origin, callback) => {
-      // Allow requests with no origin (curl, Postman, same-origin Vercel)
-      if (!origin) return callback(null, true);
-      if (process.env.NODE_ENV !== 'production') return callback(null, true);
-      if (allowedOrigins.length === 0) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      // Allow *.vercel.app preview deployments
-      if (/\.vercel\.app$/.test(origin)) return callback(null, true);
-      callback(new Error(`CORS: origin ${origin} not allowed`));
-    },
+    origin: process.env.NODE_ENV === 'production' 
+      ? ['https://vetops-command-center-ueux.vercel.app', 'https://vetops-command-center.vercel.app']
+      : ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
