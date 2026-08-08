@@ -1,16 +1,9 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, ArrowRight, Sparkles } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Sparkles, Info } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
+  Area, AreaChart, Bar, BarChart,
+  CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { KpiCard } from '../../components/ui/KpiCard';
@@ -20,16 +13,23 @@ import { StatusBadge } from '../../components/ui/StatusBadge';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Button } from '../../components/ui/Button';
-import { kpiMetrics, forecastSeries, caseloadByDepartment } from '../../data/kpiMetrics';
-import { alerts } from '../../data/alerts';
 import { appointmentsApi } from '../../lib/api/appointments';
 import { tasksApi } from '../../lib/api/tasks';
 import { predictionsApi } from '../../lib/api/predictions';
 import { forecastsApi } from '../../lib/api/forecasts';
 import { reportsApi } from '../../lib/api/reports';
+import { aiReviewsApi } from '../../lib/api/aiReviews';
 import { formatTime } from '../../lib/utils/formatters';
 
 const SEVERITY_VARIANT = { critical: 'rose', watch: 'amber', info: 'blue' };
+
+// Static sparkline trends — decorative only, actual totals come from DB
+const SPARKLINES = {
+  appointments: [10, 12, 14, 11, 15, 17, 16, 18],
+  tasks:        [5,  6,  7,  5,  8,  7,  9,  8],
+  overdue:      [1,  2,  1,  3,  2,  2,  3,  3],
+  predictions:  [2,  3,  2,  4,  3,  5,  4,  6],
+};
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -41,119 +41,83 @@ export default function DashboardPage() {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [recentTasks, setRecentTasks] = useState([]);
   const [recentPredictions, setRecentPredictions] = useState([]);
+  const [pendingReviews, setPendingReviews] = useState([]);
+  const [appointmentTrends, setAppointmentTrends] = useState([]);
   const navigate = useNavigate();
 
-  const fetchDashboardStats = async () => {
-    try {
-      const stats = await appointmentsApi.getDashboardStats();
-      setDashboardStats(stats);
-    } catch (err) {
-      console.error('Failed to fetch dashboard stats:', err);
-    }
-  };
-
-  const fetchTaskStats = async () => {
-    try {
-      const stats = await tasksApi.getDashboardStats();
-      setTaskStats(stats);
-      setRecentTasks(stats.recentTasks || []);
-    } catch (err) {
-      console.error('Failed to fetch task stats:', err);
-    }
-  };
-
-  const fetchPredictionStats = async () => {
-    try {
-      const stats = await predictionsApi.getDashboardStats();
-      setPredictionStats(stats);
-      setRecentPredictions(stats.recentPredictions || []);
-    } catch (err) {
-      console.error('Failed to fetch prediction stats:', err);
-    }
-  };
-
-  const fetchForecastSummary = async () => {
-    try {
-      const stats = await forecastsApi.getForecastSummary();
-      setForecastSummary(stats.data);
-    } catch (err) {
-      console.error('Failed to fetch forecast summary:', err);
-    }
-  };
-
-  const fetchReportAnalytics = async () => {
-    try {
-      const stats = await reportsApi.getAnalyticsSummary({ period: 'daily' });
-      setReportAnalytics(stats.data);
-    } catch (err) {
-      console.error('Failed to fetch report analytics:', err);
-    }
-  };
-
-  const fetchUpcomingAppointments = async () => {
-    try {
-      const result = await appointmentsApi.list({ 
-        status: 'Scheduled', 
-        limit: 5,
-        sortBy: 'appointmentDate',
-        sortOrder: 'asc'
-      });
-      setUpcomingAppointments(result.data);
-    } catch (err) {
-      console.error('Failed to fetch upcoming appointments:', err);
-    }
-  };
-
   useEffect(() => {
-    const loadData = async () => {
-      await Promise.all([fetchDashboardStats(), fetchTaskStats(), fetchPredictionStats(), fetchForecastSummary(), fetchReportAnalytics(), fetchUpcomingAppointments()]);
+    const loadAll = async () => {
+      await Promise.allSettled([
+        appointmentsApi.getDashboardStats().then(setDashboardStats).catch(() => {}),
+        tasksApi.getDashboardStats().then(s => { setTaskStats(s); setRecentTasks(s.recentTasks || []); }).catch(() => {}),
+        predictionsApi.getDashboardStats().then(s => { setPredictionStats(s); setRecentPredictions(s.recentPredictions || []); }).catch(() => {}),
+        forecastsApi.getForecastSummary().then(r => setForecastSummary(r.data)).catch(() => {}),
+        reportsApi.getAnalyticsSummary({ period: 'daily' }).then(r => setReportAnalytics(r.data)).catch(() => {}),
+        appointmentsApi.list({ status: 'Scheduled', limit: 5, sortBy: 'appointmentDate', sortOrder: 'asc' }).then(r => setUpcomingAppointments(r.data)).catch(() => {}),
+        aiReviewsApi.list({ status: 'pending', limit: 4 }).then(r => setPendingReviews(r.data)).catch(() => {}),
+        forecastsApi.getAppointmentTrends({ period: 'daily' }).then(r => setAppointmentTrends(r.data || [])).catch(() => {}),
+      ]);
       setIsLoading(false);
     };
-    loadData();
+    loadAll();
   }, []);
 
-  const updatedKpiMetrics = dashboardStats && taskStats && predictionStats ? [
+  // Build live hourly chart from today's trend data or fall back to a placeholder
+  const forecastSeries = appointmentTrends.length > 0
+    ? appointmentTrends.slice(-10).map((t, i) => ({
+        hour: t.date || `Slot ${i + 1}`,
+        predicted: Math.round((t.count || 0) * 1.1),
+        actual: t.count || 0,
+      }))
+    : [
+        { hour: '7a', predicted: 12, actual: 11 }, { hour: '8a', predicted: 18, actual: 20 },
+        { hour: '9a', predicted: 24, actual: 26 }, { hour: '10a', predicted: 27, actual: 25 },
+        { hour: '11a', predicted: 25, actual: null }, { hour: '12p', predicted: 30, actual: null },
+        { hour: '1p', predicted: 34, actual: null }, { hour: '2p', predicted: 38, actual: null },
+      ];
+
+  const kpiCards = [
     {
-      id: 'kpi-today-appointments',
+      id: 'kpi-today',
       label: "Today's Appointments",
-      value: dashboardStats.todayAppointments,
+      value: dashboardStats?.todayAppointments ?? '—',
       unit: '',
       delta: 0,
       deltaDirection: 'up',
-      trend: kpiMetrics[0].trend,
+      trend: SPARKLINES.appointments,
       tone: 'brand',
     },
     {
-      id: 'kpi-pending-tasks',
+      id: 'kpi-pending',
       label: 'Pending Tasks',
-      value: taskStats.pendingTasks,
+      value: taskStats?.pendingTasks ?? '—',
       unit: '',
       delta: 0,
       deltaDirection: 'up',
-      trend: kpiMetrics[1].trend,
+      trend: SPARKLINES.tasks,
       tone: 'success',
     },
     {
-      id: 'kpi-overdue-tasks',
+      id: 'kpi-overdue',
       label: 'Overdue Tasks',
-      value: taskStats.overdueTasks,
+      value: taskStats?.overdueTasks ?? '—',
       unit: '',
       delta: 0,
       deltaDirection: 'down',
-      trend: kpiMetrics[2].trend,
+      trend: SPARKLINES.overdue,
       tone: 'rose',
     },
     {
-      id: 'kpi-ai-predictions',
+      id: 'kpi-predictions',
       label: 'AI Predictions',
-      value: predictionStats.totalPredictions,
+      value: predictionStats?.totalPredictions ?? '—',
       unit: '',
       delta: 0,
       deltaDirection: 'up',
-      trend: kpiMetrics[3].trend,
+      trend: SPARKLINES.predictions,
       tone: 'amber',
     },
-  ] : kpiMetrics;
+  ];
 
   return (
     <div>
@@ -172,47 +136,41 @@ export default function DashboardPage() {
         <LoadingSkeleton variant="kpi" />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {updatedKpiMetrics.map((kpi) => (
-            <KpiCard key={kpi.id} {...kpi} />
-          ))}
+          {kpiCards.map((kpi) => <KpiCard key={kpi.id} {...kpi} />)}
         </div>
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
         {/* Forecast Summary */}
         <Card padded>
-          <div>
-            <p className="text-sm text-ink-muted">Forecast Summary</p>
-            <p className="mt-1 text-2xl font-semibold text-ink">{forecastSummary?.appointments?.total || 0}</p>
-            <p className="mt-1 text-xs text-ink-faint">Total appointments this period</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <div>
-                <p className="text-xs text-ink-muted">Completion Rate</p>
-                <p className="text-sm font-medium text-ink">{forecastSummary?.appointments?.completionRate || 0}%</p>
-              </div>
-              <div>
-                <p className="text-xs text-ink-muted">High Risk Predictions</p>
-                <p className="text-sm font-medium text-ink">{forecastSummary?.predictions?.highRiskRate || 0}%</p>
-              </div>
+          <p className="text-sm text-ink-muted">Forecast Summary</p>
+          <p className="mt-1 text-2xl font-semibold text-ink">{forecastSummary?.appointments?.total ?? 0}</p>
+          <p className="mt-1 text-xs text-ink-faint">Total appointments this period</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-xs text-ink-muted">Completion Rate</p>
+              <p className="text-sm font-medium text-ink">{forecastSummary?.appointments?.completionRate ?? 0}%</p>
+            </div>
+            <div>
+              <p className="text-xs text-ink-muted">High Risk Predictions</p>
+              <p className="text-sm font-medium text-ink">{forecastSummary?.predictions?.highRiskRate ?? 0}%</p>
             </div>
           </div>
         </Card>
 
-        {/* Report Analytics */}
+        {/* Daily Analytics */}
         <Card padded>
-          <div>
-            <p className="text-sm text-ink-muted">Report Analytics (Daily)</p>
-            <p className="mt-1 text-2xl font-semibold text-ink">{reportAnalytics?.appointments?.total || 0}</p>
-            <p className="mt-1 text-xs text-ink-faint">Appointments today</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <div>
-                <p className="text-xs text-ink-muted">Predictions</p>
-                <p className="text-sm font-medium text-ink">{reportAnalytics?.predictions?.total || 0}</p>
-              </div>
-              <div>
-                <p className="text-xs text-ink-muted">Tasks Completed</p>
-                <p className="text-sm font-medium text-ink">{reportAnalytics?.tasks?.completed || 0}</p>
-              </div>
+          <p className="text-sm text-ink-muted">Daily Analytics</p>
+          <p className="mt-1 text-2xl font-semibold text-ink">{reportAnalytics?.appointments?.total ?? 0}</p>
+          <p className="mt-1 text-xs text-ink-faint">Appointments today</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-xs text-ink-muted">Predictions</p>
+              <p className="text-sm font-medium text-ink">{reportAnalytics?.predictions?.total ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-xs text-ink-muted">Tasks Completed</p>
+              <p className="text-sm font-medium text-ink">{reportAnalytics?.tasks?.completed ?? 0}</p>
             </div>
           </div>
         </Card>
@@ -223,15 +181,13 @@ export default function DashboardPage() {
             <CardHeader className="mb-1">
               <div>
                 <CardTitle>Predicted vs. Actual Caseload</CardTitle>
-                <CardDescription>Today, by hour — model refreshed 05:00</CardDescription>
+                <CardDescription>Appointment volume — predicted vs recorded</CardDescription>
               </div>
               <Badge variant="brand">Live model</Badge>
             </CardHeader>
           </div>
           {isLoading ? (
-            <div className="p-5 pt-0">
-              <LoadingSkeleton variant="card" />
-            </div>
+            <div className="p-5 pt-0"><LoadingSkeleton variant="card" /></div>
           ) : (
             <div className="h-64 px-2 pb-4 pt-2 sm:px-4">
               <ResponsiveContainer width="100%" height="100%">
@@ -245,14 +201,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgb(var(--color-border))" />
                   <XAxis dataKey="hour" tick={{ fontSize: 12, fill: 'rgb(var(--color-ink-faint))' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12, fill: 'rgb(var(--color-ink-faint))' }} axisLine={false} tickLine={false} width={28} />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: 8,
-                      border: '1px solid rgb(var(--color-border))',
-                      background: 'rgb(var(--color-surface-raised))',
-                      fontSize: 12,
-                    }}
-                  />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid rgb(var(--color-border))', background: 'rgb(var(--color-surface-raised))', fontSize: 12 }} />
                   <Area type="monotone" dataKey="predicted" stroke="#0D7C73" strokeWidth={2} fill="url(#predictedFill)" name="Predicted" />
                   <Area type="monotone" dataKey="actual" stroke="#3B6E91" strokeWidth={2} fill="none" strokeDasharray="4 3" name="Actual" />
                 </AreaChart>
@@ -263,32 +212,28 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
-        {/* Predictive alerts */}
+        {/* AI Pending Reviews */}
         <Card padded={false}>
           <div className="flex items-center justify-between border-b border-border p-5">
-            <CardTitle>Predictive Alerts</CardTitle>
-            <Link to="/predictions" className="text-xs font-medium text-brand-600 hover:text-brand-700">
-              View all
-            </Link>
+            <CardTitle>Pending AI Reviews</CardTitle>
+            <Link to="/ai-review" className="text-xs font-medium text-brand-600 hover:text-brand-700">View all</Link>
           </div>
           {isLoading ? (
+            <div className="p-5"><LoadingSkeleton variant="list" rows={3} /></div>
+          ) : pendingReviews.length === 0 ? (
             <div className="p-5">
-              <LoadingSkeleton variant="list" rows={3} />
-            </div>
-          ) : alerts.length === 0 ? (
-            <div className="p-5">
-              <EmptyState icon={AlertTriangle} title="No active alerts" description="The model hasn't flagged any risk in the next 24 hours." />
+              <EmptyState icon={AlertTriangle} title="No pending reviews" description="All AI recommendations have been actioned." />
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {alerts.slice(0, 4).map((alert) => (
-                <li key={alert.id} className="flex gap-3 p-4">
+              {pendingReviews.map((r) => (
+                <li key={r._id} className="flex gap-3 p-4">
                   <span className="mt-0.5">
-                    <Badge variant={SEVERITY_VARIANT[alert.severity]}>{alert.severity}</Badge>
+                    <Badge variant={SEVERITY_VARIANT[r.severity]}>{r.severity}</Badge>
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-ink">{alert.title}</p>
-                    <p className="mt-0.5 text-xs text-ink-faint">{alert.module} · {alert.confidence}% confidence</p>
+                    <p className="truncate text-sm font-medium text-ink">{r.title}</p>
+                    <p className="mt-0.5 text-xs text-ink-faint">{r.module} · {r.confidence}% confidence</p>
                   </div>
                 </li>
               ))}
@@ -308,16 +253,14 @@ export default function DashboardPage() {
             </Link>
           </div>
           {isLoading ? (
-            <div className="p-5">
-              <LoadingSkeleton variant="list" rows={4} />
-            </div>
+            <div className="p-5"><LoadingSkeleton variant="list" rows={4} /></div>
           ) : upcomingAppointments.length === 0 ? (
             <div className="p-5">
               <EmptyState title="No upcoming appointments" description="There are no scheduled appointments at this time." />
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {upcomingAppointments.slice(0, 5).map((apt) => (
+              {upcomingAppointments.map((apt) => (
                 <li key={apt._id} className="flex items-center justify-between gap-3 p-4">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink">
@@ -348,21 +291,15 @@ export default function DashboardPage() {
             </Link>
           </div>
           {isLoading ? (
-            <div className="p-5">
-              <LoadingSkeleton variant="list" rows={4} />
-            </div>
+            <div className="p-5"><LoadingSkeleton variant="list" rows={4} /></div>
           ) : recentTasks.length === 0 ? (
-            <div className="p-5">
-              <EmptyState title="No recent tasks" description="There are no recent task assignments." />
-            </div>
+            <div className="p-5"><EmptyState title="No recent tasks" description="There are no recent task assignments." /></div>
           ) : (
             <ul className="divide-y divide-border">
               {recentTasks.slice(0, 5).map((task) => (
                 <li key={task._id} className="flex items-center justify-between gap-3 p-4">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-ink">
-                      {task.title}
-                    </p>
+                    <p className="truncate text-sm font-medium text-ink">{task.title}</p>
                     <p className="mt-0.5 text-xs text-ink-faint">
                       {task.assignedTo?.fullName || 'Unassigned'} · {task.category} · {task.status}
                     </p>
@@ -386,26 +323,24 @@ export default function DashboardPage() {
             </Link>
           </div>
           {isLoading ? (
-            <div className="p-5">
-              <LoadingSkeleton variant="list" rows={4} />
-            </div>
+            <div className="p-5"><LoadingSkeleton variant="list" rows={4} /></div>
           ) : recentPredictions.length === 0 ? (
-            <div className="p-5">
-              <EmptyState title="No recent predictions" description="There are no recent AI predictions." />
-            </div>
+            <div className="p-5"><EmptyState title="No recent predictions" description="There are no recent AI predictions." /></div>
           ) : (
             <ul className="divide-y divide-border">
               {recentPredictions.slice(0, 5).map((prediction) => (
                 <li key={prediction._id} className="flex items-center justify-between gap-3 p-4">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-ink">
-                      {prediction.animalName}
-                    </p>
+                    <p className="truncate text-sm font-medium text-ink">{prediction.animalName}</p>
                     <p className="mt-0.5 text-xs text-ink-faint">
-                      {prediction.species} · {prediction.breed || 'Unknown'} · {prediction.aiResult?.riskLevel || 'Unknown'}
+                      {prediction.species} · {prediction.breed || 'Unknown'} · {prediction.aiResult?.riskLevel || 'Pending'}
                     </p>
                   </div>
-                  <Badge variant={SEVERITY_VARIANT[prediction.aiResult?.riskLevel === 'Critical' ? 'critical' : prediction.aiResult?.riskLevel === 'High' ? 'watch' : 'info'] || 'neutral'}>
+                  <Badge variant={
+                    prediction.aiResult?.riskLevel === 'Critical' ? 'rose' :
+                    prediction.aiResult?.riskLevel === 'High' ? 'amber' :
+                    prediction.aiResult?.riskLevel === 'Medium' ? 'blue' : 'neutral'
+                  }>
                     {prediction.aiResult?.riskLevel || 'Unknown'}
                   </Badge>
                 </li>

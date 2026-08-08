@@ -11,7 +11,6 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { appointmentsApi } from '../../lib/api/appointments';
 import { veterinariansApi } from '../../lib/api/veterinarians';
-import { appointments } from '../../data/appointments';
 import { formatTime } from '../../lib/utils/formatters';
 import { useDisclosure } from '../../hooks/useDisclosure';
 

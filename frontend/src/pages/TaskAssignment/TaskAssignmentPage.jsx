@@ -14,7 +14,6 @@ import { Input } from '../../components/ui/Input';
 import { useDisclosure } from '../../hooks/useDisclosure';
 import { tasksApi } from '../../lib/api/tasks';
 import { veterinariansApi } from '../../lib/api/veterinarians';
-import { tasks } from '../../data/tasks';
 import { formatTime } from '../../lib/utils/formatters';
 
 const PRIORITY_VARIANT = { Critical: 'rose', High: 'amber', Medium: 'blue', Low: 'neutral' };

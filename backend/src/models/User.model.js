@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
-const adminSchema = new mongoose.Schema(
+// Unified User model covering both admin users (original Admin model) and all staff roles.
+// The 'Admin' export is kept for backward compatibility with existing auth controller.
+
+const userSchema = new mongoose.Schema(
   {
     email: {
       type: String,
@@ -28,8 +31,20 @@ const adminSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['admin', 'superadmin'],
-      default: 'admin',
+      enum: ['admin', 'superadmin', 'manager', 'analyst', 'field_staff', 'veterinarian', 'receptionist'],
+      default: 'field_staff',
+    },
+    department: {
+      type: String,
+      trim: true,
+    },
+    phone: {
+      type: String,
+      trim: true,
+    },
+    jobTitle: {
+      type: String,
+      trim: true,
     },
     isActive: {
       type: Boolean,
@@ -38,13 +53,23 @@ const adminSchema = new mongoose.Schema(
     lastLogin: {
       type: Date,
     },
+    invitedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    invitedAt: {
+      type: Date,
+    },
+    // For password reset
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
   },
   {
     timestamps: true,
   }
 );
 
-adminSchema.pre('save', async function (next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
@@ -57,14 +82,27 @@ adminSchema.pre('save', async function (next) {
   }
 });
 
-adminSchema.methods.comparePassword = async function (candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-adminSchema.methods.toJSON = function () {
-  const admin = this.toObject();
-  delete admin.password;
-  return admin;
+userSchema.methods.toJSON = function () {
+  const user = this.toObject();
+  delete user.password;
+  delete user.resetPasswordToken;
+  delete user.resetPasswordExpires;
+  return user;
 };
 
-export const Admin = mongoose.model('Admin', adminSchema);
+userSchema.virtual('fullName').get(function () {
+  return `${this.firstName} ${this.lastName}`;
+});
+
+// email already has a unique index from the schema definition — don't redeclare it
+userSchema.index({ role: 1 });
+userSchema.index({ isActive: 1 });
+
+export const User = mongoose.model('User', userSchema);
+
+// Backward-compatible alias — auth controller uses 'Admin'
+export const Admin = User;
