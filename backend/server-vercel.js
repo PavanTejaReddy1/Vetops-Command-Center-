@@ -8,7 +8,6 @@
  * The app is initialised once (module-level) and reused across invocations.
  */
 import 'dotenv/config';
-import serverless from 'serverless-http';
 import { createApp } from './src/app.js';
 import { connectDatabase } from './src/config/database.js';
 
@@ -23,10 +22,7 @@ async function ensureDb() {
 
 const app = createApp();
 
-// Wrap Express app with serverless-http for Vercel compatibility
-const handler = serverless(app);
-
-export default async function handlerWrapper(req, res) {
+export default async function handler(req, res) {
   await ensureDb();
-  return handler(req, res);
+  return app(req, res);
 }
