@@ -78,6 +78,18 @@ export function createApp() {
     });
   });
 
+  // Root route
+  app.get('/', (req, res) => {
+    res.json({
+      message: 'VetOps Command Center API',
+      version: 'v1',
+      endpoints: {
+        health: '/health',
+        api: '/api/v1'
+      }
+    });
+  });
+
   // API routes with audit logging
   app.use('/api/v1', auditLogger, apiRouter);
 
