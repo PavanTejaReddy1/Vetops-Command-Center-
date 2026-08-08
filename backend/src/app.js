@@ -62,6 +62,17 @@ export function createApp() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+  app.get('/api/v1', (req, res) => {
+    res.json({
+      message: 'VetOps Command Center API',
+      version: 'v1',
+      endpoints: {
+        health: '/health',
+        api: '/api/v1'
+      }
+    });
+  });
+
   // Health check
   app.get('/health', (req, res) => {
     const dbStatus = getDatabaseStatus();
